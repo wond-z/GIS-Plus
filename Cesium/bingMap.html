@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium BingMap</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <button id="addAerialMapButton">影像图</button>
+    <button id="addRoadMapButton">街道图</button>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer", {
+            imageryProvider: null
+        });
+
+        const bingMapsKey = 'AllVyoDvsARICnQa2euf4HRzSbttZ8QGpgjx4pu0Tj1WADOmr-JmbvxHUR33a4yA';
+        const bingStyle = [
+            Cesium.BingMapsStyle.AERIAL_WITH_LABELS,
+            Cesium.BingMapsStyle.COLLINS_BART,
+            Cesium.BingMapsStyle.CANVAS_GRAY,
+            Cesium.BingMapsStyle.CANVAS_LIGHT,
+            Cesium.BingMapsStyle.CANVAS_DARK,
+            Cesium.BingMapsStyle.ORDNANCE_SURVEY,
+            Cesium.BingMapsStyle.ROAD,
+            Cesium.BingMapsStyle.AERIAL,
+        ];
+
+        // 函数：根据给定的样式添加Bing地图图层  -- 失败
+        function addBingMapsLayer(mapStyle) {
+            // 清除当前的imageryLayers集合
+            viewer.imageryLayers.removeAll();
+
+            // 创建Bing地图提供者
+            var bingMapsImageryProvider = new Cesium.BingMapsImageryProvider({
+                url : 'https://dev.virtualearth.net',
+                mapStyle : mapStyle,
+                key : bingMapsKey
+            });
+
+            // 添加新的Bing地图图层
+            viewer.imageryLayers.add(bingMapsImageryProvider);
+        }
+
+        // 成功
+        async function addLayer(mapStyle) {
+            var bingMapProvider = await Cesium.BingMapsImageryProvider.fromUrl('https://dev.virtualearth.net', {
+                key: bingMapsKey,
+                mapStyle : mapStyle
+            });
+            viewer.imageryLayers.addImageryProvider(bingMapProvider);
+        }
+
+        // var gridImagery = new Cesium.GridImageryProvider();
+        // var gridImageryLayer = viewer.imageryLayers.addImageryProvider(gridImagery);
+        // viewer.imageryLayers.raiseToTop(gridImageryLayer); //将图层置顶
+
+        document.getElementById('addAerialMapButton').addEventListener('click', function() {
+            addLayer(Cesium.BingMapsStyle.AERIAL);
+        });
+
+        document.getElementById('addRoadMapButton').addEventListener('click', function() {
+            addLayer(Cesium.BingMapsStyle.ROAD);
+        });
+    </script>
+</body>
+
+</html>

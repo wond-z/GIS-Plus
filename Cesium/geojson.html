@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoJson</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+        });
+        async function addModel() {
+            const dataSource = await Cesium.GeoJsonDataSource.load('./SampleData/json/roadnet4326_copy.json', {
+                stroke: Cesium.Color.HOTPINK,
+                fill: Cesium.Color.PINK,
+                strokeWidth: 3,
+                markerSymbol: '?'
+            });
+            viewer.dataSources.add(dataSource);
+
+            // 定位到路径实体位置
+            const entities = dataSource.entities.values;
+            viewer.zoomTo(entities[0]);
+        }
+
+        addModel();
+    </script>
+</body>
+
+</html>

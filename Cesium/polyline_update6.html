@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制线</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+
+        // 计算距离
+        function spaceDistance(positions) {
+            let distance = 0;
+            for (let i = 0; i < positions.length - 1; i++) {
+                let point1cartographic = Cesium.Cartographic.fromCartesian(
+                    positions[i]
+                );
+                let point2cartographic = Cesium.Cartographic.fromCartesian(
+                    positions[i + 1]
+                );
+                /**根据经纬度计算出距离**/
+                let geodesic = new Cesium.EllipsoidGeodesic();
+                geodesic.setEndPoints(point1cartographic, point2cartographic);
+                let s = geodesic.surfaceDistance;
+                //返回两点之间的距离 如果带高度的话
+                s = Math.sqrt(
+                    Math.pow(s, 2) +
+                    Math.pow(point2cartographic.height - point1cartographic.height, 2)
+                );
+                distance = distance + s;
+            }
+            return distance.toFixed(2);
+        }
+
+        // 计算每个点位时间和总时间
+        function getSiteTimes(positions, speed) {
+            let timeSum = 0;
+            let times = [];
+            for (let i = 0; i < positions.length; i++) {
+                if (i === 0) {
+                    times.push(0);
+                    continue;
+                }
+                timeSum += this.spaceDistance([positions[i - 1], positions[i]]) / speed;
+                times.push(timeSum);
+            }
+            return {
+                timeSum,
+                siteTimes: times,
+            };
+        }
+
+        function createPositionProperty(positions, timeObj) {
+            let startTime = Cesium.JulianDate.fromDate(new Date());
+            let stopTime = Cesium.JulianDate.addSeconds(startTime, timeObj.timeSum, new Cesium.JulianDate());
+            viewer.clock.shouldAnimate = true;
+            viewer.clock.startTime = startTime.clone();
+            viewer.clock.stopTime = stopTime.clone();
+            viewer.clock.currentTime = startTime.clone();
+            // 生成property
+            var property = new Cesium.SampledPositionProperty();
+            for (var i = 0; i < positions.length; i++) {
+                const time = Cesium.JulianDate.addSeconds(startTime, timeObj.siteTimes[i], new Cesium.JulianDate());
+                property.addSample(time, positions[i]);
+            }
+            return property;
+        }
+
+        function createOrientationProperty(positions) {
+            // 计算路径上每个点的切线方向，并应用到图标的旋转上
+            let tangents = [];
+            for (let i = 1; i < positions.length; i++) {
+                let prev = positions[i - 1];
+                let current = positions[i];
+                
+                // 计算切线方向
+                let tangent = Cesium.Cartesian3.subtract(current, prev, new Cesium.Cartesian3());
+                tangent = Cesium.Cartesian3.normalize(tangent, tangent);
+                
+                // 将切线方向转换为旋转四元数
+                let rotation = Cesium.Quaternion.fromAxisAngle(tangent, Cesium.Math.toRadians(90));
+                tangents.push(rotation);
+                // 设置图标的旋转
+                // entity.orientation = rotation;
+                
+                // 可以添加延迟或间隔，以模拟动画效果
+                // setTimeout(function() { ... }, i * 1000); // 每秒移动一个点
+            }
+            return tangents;
+        }
+
+        // 用户函数定义
+        function PathPlayback(config) {
+            let speed = 100;
+            let positions = [];
+            if (config.isPathType && config.name) {
+                // TODO: 根据名称获取已存在坐标信息
+
+            } else {
+                positions = config.constPoints.map((item) => {
+                    return Cesium.Cartesian3.fromDegrees(item[0], item[1], 0.5);
+                });
+                // 添加路径
+                const pathEntity = viewer.entities.add({
+                    polyline: {
+                        positions: positions,
+                        width: 5, // 线段宽度
+                        material: Cesium.Color.fromCssColorString(config.color), // 线段颜色
+                    }
+                });
+                viewer.zoomTo(pathEntity);
+            }
+            // 速率处理
+            config.rate = config.rate ? config.rate : 1;
+
+            // 移动标记定义
+            let animateEntity = viewer.entities.add({
+                // 位置信息随时间变化property
+                position: positions[0],
+                // 实体方向
+                // orientation: new Cesium.VelocityOrientationProperty(property),
+                billboard: {
+                    image: './SampleData/image/pic.jpg',
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    scale: 0.02,
+                    rotation : 0
+                },
+            });
+
+            let timeObj = getSiteTimes(positions, speed * config.rate);
+            console.log(timeObj)
+
+
+            // 延迟节流，首次及后续都需要间隔一段时间触发才生效
+            function throttleDelayExecution(fn, delay){
+                let last = Date.now(); // 使用时间戳实现
+                return function (){
+                    let now = Date.now();
+                    if(now - last >= delay){
+                        fn.apply(this, arguments);
+                        last = now;
+                    }
+                }
+            }
+
+
+            let coverPositions = [positions[0]];
+            let coverLine = viewer.entities.add({
+                polyline: {
+                    positions: [positions[0], positions[1]],
+                    width: 10, // 设置线段宽度
+                    material: Cesium.Color.RED.withAlpha(0.5), // 设置线段颜色，带有透明度
+                    loop: false // 设置线段是否闭合
+                }
+            });
+            // const adjustRate = (clock) => {
+            //     // console.log(clock)
+            //     // console.log(clock.currentTime)
+            //     let currentPos = animateEntity.position.getValue(clock.currentTime);
+            //     if (currentPos) {
+            //         // currentPos.z = 4000000;
+            //         coverPositions.push(currentPos);
+            //         console.log(coverPositions)
+            //         // drawHis(prevPos, currentPos)
+            //         coverLine.polyline.position = coverPositions;
+            //     }
+
+            //     // if (Cesium.JulianDate.compare(clock.currentTime, julianEnd) > 0) {
+            //     //     if (clock.multiplier === 50) {
+            //     //         viewer.clock.multiplier = 1;
+            //     //     }
+            //     //     viewer.clock.onTick.removeEventListener(adjustRate);
+            //     // }
+            // };
+
+            // // function drawHis(prev, cur) {
+            // //     console.log(cur)
+                
+            // //     prevPos = cur;
+            // // }
+            // viewer.clock.onTick.addEventListener(throttleDelayExecution(adjustRate, 500));
+
+            animateEntity.position = createPositionProperty(positions, timeObj);
+            // animateEntity.rotation = createOrientationProperty(positions);
+            // 循环播放
+            if (config.isloop) {
+                setInterval(() => {
+                    animateEntity.position = createPositionProperty(positions, timeObj);
+                }, timeObj.timeSum * 1000);
+            } else {
+                setTimeout(() => {
+                    animateEntity.position = positions.at(-1);
+                }, timeObj.timeSum * 1000);
+            }
+        }
+
+        
+        
+        const lnglatArr = [
+            [121.527589, 38.957547],
+            [121.527825, 38.960166],
+            [121.536472, 38.959098],
+            [121.540442, 38.958464],
+            [121.543489, 38.958131],
+            [121.542888, 38.955861],
+            [121.542266, 38.953325],
+        ];
+        const config = {
+            constPoints: lnglatArr,
+            color: 'rgb(48, 242, 120)', // 路线颜色
+            icon: './SampleData/image/pic.jpg', // 资源id或图标管理中的图片名称
+            isloop: true, // 循环播放
+            rate: 1 // 回放速度100x
+        };
+        PathPlayback(config);
+        
+    </script>
+</body>
+
+</html>

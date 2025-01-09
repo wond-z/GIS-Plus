@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        
+		function IsMobile() {
+			var ios = /AppleWebKit/.test(navigator.userAgent) && /Mobile\/\w+/.test(navigator.userAgent);
+			var mobile = ios || /Android|webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(navigator.userAgent);
+			return mobile;
+		}
+		// Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5OTc4MTFiYS1hYzhlLTQ3ZjYtYWJmMi1hODMwMWMxZGRiYTQiLCJpZCI6ODU1NDksImlhdCI6MTY1Mzc5NDc5N30.ldTi8bF3XvSOgnZrMITokRW4kE3i8Mwbarhk5OQbPsI';
+		var terrain = Cesium.createDefaultTerrainProviderViewModels();
+		var viewer = new Cesium.Viewer('cesiumContainer', {
+			animation:false,
+			vrButton : true,
+			timeline : false,
+			sceneModePicker : false,
+			scene3DOnly : true,
+			infoBox : true,
+			terrainProviderViewModels : terrain,
+			selectedTerrainProviderViewModel : terrain[0]
+		});
+
+        async function addModel() {
+            var stages = viewer.scene.postProcessStages;
+            viewer.scene.brightness =  viewer.scene.brightness || stages.add(Cesium.PostProcessStageLibrary.createBrightnessStage());
+            viewer.scene.brightness.enabled = true;
+            viewer.scene.brightness.uniforms.brightness = Number(1.2);
+            viewer.scene.globe.depthTestAgainstTerrain = false;
+            var boundingSphere = new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(117.8032702, 30.72666445, 8.917366722), 1578.088321);
+            viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(cmd) {
+                viewer.camera.flyToBoundingSphere(boundingSphere);
+                cmd.cancel = true;
+            });
+            viewer.camera.flyToBoundingSphere(boundingSphere, { duration: 0 });
+            let tileset = await Cesium.Cesium3DTileset.fromUrl('http://172.30.20.234/Data/tileset.json', {
+                // maximumScreenSpaceError :  16,
+                // maximumNumberOfLoadedTiles : IsMobile() ? 32 : 1024,
+                skipLevelOfDetail: true,
+                baseScreenSpaceError: 2048,
+                skipScreenSpaceErrorFactor: 16,
+                skipLevels: 1,
+                immediatelyLoadDesiredLevelOfDetail: false,
+                loadSiblings: false,
+                cullWithChildrenBounds: true
+            })
+            var tiles = viewer.scene.primitives.add(tileset);
+            // viewer.scene.logarithmicDepthBuffer = true
+            tileset.tileUnload.addEventListener(function(tile) {
+            console.log('A tile was unloaded from the cache.', tile);
+        });
+            var pointsCollection = [];
+            viewer.screenSpaceEventHandler.setInputAction((evt) => {
+                var cartesian = viewer.scene.pickPosition(evt.position);
+                if (Cesium.defined(cartesian)) {
+                    var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+                    var lng = Cesium.Math.toDegrees(cartographic.longitude);
+                    var lat = Cesium.Math.toDegrees(cartographic.latitude);
+                    var height = cartographic.height;
+                    var entity = viewer.entities.add({
+                    position: Cesium.Cartesian3.fromDegrees(lng, lat, height),
+                    label : {
+                        text: 'Lon: ' + lng.toFixed(5) + '\u00B0' + '\nLat: ' + lat.toFixed(5) + '\u00B0' + '\nheight: ' + height.toFixed(4) + 'm',
+                        font : '20px monospace',
+                        fillColor : Cesium.Color.BLACK,
+                        scale : 1,
+                        style : Cesium.LabelStyle.FILL,
+                        pixelOffset : new Cesium.Cartesian2(-90, -30),
+                        showBackground : true,
+                        backgroundColor : Cesium.Color.AQUA.withAlpha(1),
+                        backgroundPadding : new Cesium.Cartesian2(17, 10),
+                        horizontalOrigin : Cesium.HorizontalOrigin.LEFT,
+                        verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
+                        disableDepthTestDistance : Number.POSITIVE_INFINITY,
+                    },
+                    point:{
+                        color:Cesium.Color.RED,
+                        pixelSize : 9,
+                        outlineColor : Cesium.Color.ALICEBLUE,
+                        outlineWidth : 2,
+                        disableDepthTestDistance : Number.POSITIVE_INFINITY,
+                    },
+                })
+                pointsCollection.push(entity);
+            }
+            }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+        
+        }
+        addModel();
+    </script>
+</body>
+
+</html>

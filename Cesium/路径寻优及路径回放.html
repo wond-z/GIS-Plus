@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路径寻优及路径回放</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+    <style>
+        #cesiumContainer {
+            width: 100%;
+            height: 90vh;
+        }
+
+        .button-group {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <div class="button-group">
+        <button id="addRoad">添加路网信息</button>
+        <button id="getShortestPath">获取最短路径</button>
+        <button id="getRepeatPath">获取重复路径</button>
+        <button id="pathReplay">路径回放</button>
+        <button id="pathReplayPause">回放暂停</button>
+        <button id="pathReplayResume">回放继续</button>
+        <button id="go">一键直达</button>
+        <button id="pathReplayStop">停止回放</button>
+    </div>
+    <script type="module">
+        // 引入模块，用于路径寻优
+        import { Graph, CoordinateLookup, buildGeoJsonPath, buildEdgeIdList } from './shortestPath/index_copy.js';
+
+        // 按钮事件绑定
+        document.getElementById('addRoad').addEventListener('click', addRoad, false);
+        document.getElementById('getShortestPath').addEventListener('click', getShortestPath, false);
+        document.getElementById('getRepeatPath').addEventListener('click', getRepeatPath, false);
+        document.getElementById('pathReplay').addEventListener('click', pathReplay, false);
+        document.getElementById('pathReplayPause').addEventListener('click', pathReplayPause, false);
+        document.getElementById('pathReplayResume').addEventListener('click', pathReplayResume, false);
+        document.getElementById('go').addEventListener('click', go, false);
+        document.getElementById('pathReplayStop').addEventListener('click', pathReplayStop, false);
+
+        // 地图初始化
+        window.viewer = new Cesium.Viewer('cesiumContainer', {
+            sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+        });
+
+        // 全局变量
+        let geoJson = {}; // 解析后的geojson数据，包含每两点间距离
+        let shortestPathArr = []; // 获取最短路径信息
+        const rate = 0.1; // 移动速率（倍数），基数为100
+        // 路线层级说明：最短路径高度：2，重复路径高度：1，移动模型高度：2，
+
+        // 显示全部
+        function go() {
+            addRoad(function() {
+                getShortestPath();
+                // getRepeatPath();
+                pathReplay();
+            });
+        }
+
+        // 添加路网数据
+        function addRoad(callback) {
+            // 请求geojson数据
+            fetch('SampleData/json/roadnet4326.json').then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).then(data => {
+                // 解析geojson数据并将其添加到地图中
+                addModel(data, callback);
+            }).catch(error => {
+                console.error('There has been a problem with your fetch operation:', error);
+            });
+        }
+
+        // 获取经过指定点的最短路径
+        function getShortestPath() {
+            // 用户采集点数据
+            const points = [
+                [121.77891622028602, 31.326115243137735],
+                [121.77919706498994, 31.326093135518327],
+                [121.77914630097598, 31.32634719438341],
+                [121.77907019197639, 31.326276879174763]
+            ];
+            drawPoints(points);
+
+            // 获取最优路径
+            const graph = new Graph(geoJson);
+            const lookup = new CoordinateLookup(graph);
+            let features = [];
+            // 获取经过points各点的最短路径
+            for (let i = 0; i < points.length - 1; i++) {
+                const coords1 = lookup.getClosestNetworkPt(points[i][0], points[i][1]);
+                const coords2 = lookup.getClosestNetworkPt(points[i + 1][0], points[i + 1][1]);
+                const finder = graph.createFinder({ parseOutputFns: [buildGeoJsonPath, buildEdgeIdList] });
+                const result = finder.findPath(coords1, coords2);
+                // console.log('result: ', result);
+                // 整理结果数据
+                features = features.concat(result.geojsonPath.features);
+            }
+            
+            // 解析完整路径
+            for (let i = 0; i < features.length; i++) {
+                const item = features[i].geometry.coordinates;
+                if (i === 0) {
+                    shortestPathArr.push(item[0]);
+                }
+                shortestPathArr.push(item[1]);
+            }
+
+            console.log('shortestPathArr: ', shortestPathArr);
+
+            // 添加最短路径
+            drawPolyline(shortestPathArr, {
+                width: 5,
+                color: Cesium.Color.fromCssColorString('rgba(0, 0, 255, 0.5)'),
+                height: 2
+            });
+        }
+
+        // 绘制重复路径
+        function getRepeatPath() {
+            const repeatPath = _getRepeatPath(shortestPathArr);
+            if (repeatPath.length) {
+                for (let i = 0; i < repeatPath.length; i++) {
+                    drawPolyline(repeatPath[i], {
+                        width: 9,
+                        color: Cesium.Color.WHITE.withAlpha(0.5),
+                        height: 1
+                    });
+                }
+            }
+        }
+
+        // 路径回放
+        function pathReplay() {
+            const positions = shortestPathArr.map((item) => {
+                return Cesium.Cartesian3.fromDegrees(item[0], item[1], 2);
+            });
+
+            // 移动标记，使用模型可支持转向
+            let animateEntity = viewer.entities.add({
+                id: 'playbackMark',
+                name: 'model',
+                model: {
+                    uri: "/SampleData/models/CesiumAir/Cesium_Air.glb",
+                    show: true,
+                    scale: 0.5
+                }
+            });
+
+            let timeObj = getSiteTimes(positions);
+            console.log('timeObj: ', timeObj);
+
+            animateEntity.position = createPositionProperty(positions, timeObj);
+            animateEntity.orientation = new Cesium.VelocityOrientationProperty(createPositionProperty(positions, timeObj));
+            
+            // 实时移动轨迹
+            viewer.entities.add({
+                id: 'playbackPath',
+                name: 'line',
+                polyline: {
+                    positions: new Cesium.CallbackProperty(time => {
+                        var tarpos = animateEntity.position.getValue(time);
+                        if (!tarpos) return;
+                        var cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(tarpos);
+                        var lon = Cesium.Math.toDegrees(cartographic.longitude);
+                        var lat = Cesium.Math.toDegrees(cartographic.latitude);
+
+                        let start = viewer.clock.startTime.clone();
+                        const timeDifference = Cesium.JulianDate.secondsDifference(time, start);
+                        let currentTime = 0;
+                        let lastPointList = [];
+                        for (let i = 1; i < shortestPathArr.length; i++) {
+                            currentTime = timeObj.siteTimes[i];
+                            if (timeDifference < currentTime) {
+                                lastPointList.push([shortestPathArr[i - 1][0], shortestPathArr[i - 1][1]]);
+                                break;
+                            } else {
+                                lastPointList.push([shortestPathArr[i - 1][0], shortestPathArr[i - 1][1]]);
+                            }
+                        }
+                        lastPointList.push([lon, lat]);
+                        return lastPointList.map(item => {
+                            return Cesium.Cartesian3.fromDegrees(item[0], item[1], 3);
+                        });
+                    }, false),
+                    width: 13,
+                    material: Cesium.Color.RED.withAlpha(0.5),
+                }
+            });
+        }
+
+        // 路径回放暂停
+        function pathReplayPause() {
+            viewer.clock.shouldAnimate = false; // 停止动画
+        }
+
+        // 路径回放继续
+        function pathReplayResume() {
+            viewer.clock.shouldAnimate = true; // 开始动画
+        }
+
+        function pathReplayStop() {
+            viewer.clock.shouldAnimate = false; // 停止动画
+            // 删除移动标记
+            const entityMark = viewer.entities.getById('playbackMark');
+            if (entityMark) {
+                viewer.entities.remove(entityMark);
+            }
+            // 删除移动路径
+            const entityPath = viewer.entities.getById('playbackPath');
+            if (entityPath) {
+                viewer.entities.remove(entityPath);
+            }
+        }
+
+        // ========================== 其它依赖函数 ============================
+
+        // 将geojson数据添加到地图中
+        async function addModel(json, callback) {
+            geoJson = parseGeojson(json);
+            const dataSource = await Cesium.GeoJsonDataSource.load(geoJson, {
+                stroke: Cesium.Color.YELLOW.withAlpha(0.5),
+                fill: Cesium.Color.PINK,
+                strokeWidth: 5,
+                markerSymbol: 'aaa'
+            });
+            viewer.dataSources.add(dataSource);
+
+            // 场景定位
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(121.77846541927754, 31.32594172054384, 1500),
+                orientation: {
+                    heading: Cesium.Math.toRadians(351.9),
+                    pitch: Cesium.Math.toRadians(-85.7),
+                    roll: 0.0
+                }
+            });
+
+            if (callback) {
+                callback();
+            }
+        }
+
+        // 解析geojson数据
+        function parseGeojson(json) {
+            // 新解析后的geojson数据
+            let geoJson = {
+                "type": "FeatureCollection",
+                "name": "roadnet",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
+
+            // 每条线将其中的详细线段均取到
+            for (let i = 0; i < json.features.length; i++) {
+                const item = json.features[i];
+                for (let j = 1; j < item.geometry.coordinates[0].length; j++) {
+                    const startPoint = item.geometry.coordinates[0][j - 1];
+                    const endPoint = item.geometry.coordinates[0][j];
+                    let feature = {
+                        "type": "Feature",
+                        "properties": {
+                            "_id": item.properties.fid + '_' + j,
+                            "_cost": computeDistanceBetweenPoints(startPoint, endPoint)
+                        },
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                startPoint,
+                                endPoint
+                            ]
+                        }
+                    };
+                    geoJson.features.push(feature);
+                }
+            }
+            console.log(geoJson);
+            return geoJson;
+        }
+
+        // 计算两点间实际距离（单位：米）
+        function computeDistanceBetweenPoints(startPoint, endPoint) {
+            // 将经纬度转换为弧度
+            const radiansLon1 = Cesium.Math.toRadians(startPoint[0]);
+            const radiansLon2 = Cesium.Math.toRadians(endPoint[0]);
+            const radiansLat1 = Cesium.Math.toRadians(startPoint[1]);
+            const radiansLat2 = Cesium.Math.toRadians(endPoint[1]);
+
+            // 地球的平均半径（以米为单位）
+            const earthRadius = 6371000; // 这是一个常用的近似值
+
+            // 根据经纬度计算笛卡尔坐标
+            const cartesian1 = Cesium.Cartesian3.fromDegrees(startPoint[0], startPoint[1], 0);
+            const cartesian2 = Cesium.Cartesian3.fromDegrees(endPoint[0], endPoint[1], 0);
+
+            // 计算两点之间的距离
+            const distance = Cesium.Cartesian3.distance(cartesian1, cartesian2);
+
+            return distance; // 返回以米为单位的距离
+        }
+        
+        // 查询重复路径
+        function _getRepeatPath(arr) {
+            var newArr = [];
+            // arr顺向遍历
+            for (let i = 0; i < arr.length; i++) {
+                // arr逆向遍历
+                for (let j = arr.length - 1; j > -1; j--) {
+                    // 遇到相同值开始校验
+                    if (i !== j && arr[i].toString() === arr[j].toString()) {
+                        let newStart1 = i;
+                        let newStart2 = j;
+                        var arrCache = [];
+                        var flag = true;
+                        while (flag) {
+                            arrCache.push(arr[newStart2]);
+                            newStart1++;
+                            newStart2--;
+                            flag = newStart1 < arr.length && newStart2 > -1 && arr[newStart1].toString() === arr[newStart2].toString();
+                        }
+                        if (arrCache.length > 1) {
+                            newArr.push(arrCache);
+                            i = i + arrCache.length;
+                            if (i >= arr.length) break;
+                        }
+                    }
+
+                }
+            }
+            return newArr;
+        }
+        
+        // 构建位置属性（时间对应位置）
+        function createPositionProperty(positions, timeObj) {
+            // 定义时钟
+            let startTime = Cesium.JulianDate.fromDate(new Date());
+            let stopTime = Cesium.JulianDate.addSeconds(startTime, timeObj.timeSum, new Cesium.JulianDate());
+            viewer.clock.shouldAnimate = true;
+            viewer.clock.startTime = startTime.clone();
+            viewer.clock.stopTime = stopTime.clone();
+            viewer.clock.currentTime = startTime.clone();
+            viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; // 循环播放
+            viewer.clock.multiplier = rate; // 播放速率倍数
+            // 生成property
+            var property = new Cesium.SampledPositionProperty();
+            for (var i = 0; i < positions.length; i++) {
+                const time = Cesium.JulianDate.addSeconds(startTime, timeObj.siteTimes[i], new Cesium.JulianDate());
+                property.addSample(time, positions[i]);
+            }
+            return property;
+        }
+
+        // 计算每个点位时间和总时间
+        function getSiteTimes(positions) {
+            const speed = 100; // 移动基础速度
+            let timeSum = 0;
+            let times = [];
+            let distance = [];
+            for (let i = 0; i < positions.length; i++) {
+                if (i === 0) {
+                    times.push(0);
+                    continue;
+                }
+                const spaceDistance = Cesium.Cartesian3.distance(positions[i - 1], positions[i]);
+                distance.push(spaceDistance);
+                timeSum += spaceDistance / speed;
+                times.push(timeSum);
+            }
+            return {
+                distance,
+                timeSum,
+                siteTimes: times,
+            };
+        }
+
+        // 绘制多个点
+        function drawPoints(features) {
+            for (let i = 0; i < features.length; i++) {
+                const position = Cesium.Cartesian3.fromDegrees(features[i][0], features[i][1], 1);
+                viewer.entities.add({
+                    position: position,
+                    point: {
+                        pixelSize: 10,
+                        color: Cesium.Color.RED,
+                        outlineColor: Cesium.Color.YELLOW,
+                        outlineWidth: 2
+                    }
+                });
+            }
+        }
+
+        // 绘制路径（单条）
+        function drawPolyline(features, config) {
+            let positions = [];
+            for (let i = 0; i < features.length; i++) {
+                positions.push(Cesium.Cartesian3.fromDegrees(features[i][0], features[i][1], config.height));
+            }
+
+            // 创建PolylineGraphics对象
+            var polyline = viewer.entities.add({
+                polyline: {
+                    positions: positions,
+                    width: config.width, // 线段宽度
+                    material: config.color, // 线段颜色
+                    outline: true, // 是否绘制轮廓
+                    outlineWidth: 5, // 轮廓宽度
+                    outlineColor: Cesium.Color.WHITE // 轮廓颜色
+                }
+            });
+        }
+
+
+        // ========================= 辅助工具类（基于地图，非业务逻辑） ================================
+        // 添加鼠标点击事件监听器
+        viewer.scene.canvas.addEventListener('click', function (event) {
+            // 获取鼠标在canvas上的相对位置
+            var position = new Cesium.Cartesian2(event.clientX, event.clientY);
+
+            // 转换鼠标位置为归一化设备坐标（NDC），范围在[-1, 1]之间
+            var ndc = viewer.scene.camera.pickEllipsoid(position, viewer.scene.globe.ellipsoid);
+
+            // 如果ndc有效（即鼠标点击在了地球上），则获取其经纬度
+            if (Cesium.defined(ndc)) {
+                var cartographic = Cesium.Cartographic.fromCartesian(ndc);
+
+                // 转换为度数格式
+                var longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                var latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                // 打印或显示经纬度
+                console.log('lon: ' + longitude + ', lat: ' + latitude);
+            }
+        });
+    </script>
+</body>
+
+</html>

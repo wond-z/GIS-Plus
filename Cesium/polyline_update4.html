@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制线</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+        viewer.clock.shouldAnimate = true;
+        // viewer.camera.flyTo({
+        //     destination: Cesium.Cartesian3.fromDegrees(121.7795358045936, 31.32552223262881, 100.0)
+        // });
+
+        var pointArr = [
+            121.77954156128845, 31.32552805173489,
+            121.77876045270555, 31.32488742631992,
+            121.77670676962728, 31.326225118684683
+        ];
+        var positions = Cesium.Cartesian3.fromDegreesArray(pointArr);
+        const totalTime = 15;
+        const timeInterval = totalTime / positions.length;
+        // 添加路径
+        viewer.entities.add({
+            polyline: {
+                positions: positions,
+                width: 5, // 线段宽度
+                material: Cesium.Color.YELLOW.withAlpha(1), // 线段颜色
+                outline: true, // 是否绘制轮廓
+                outlineWidth: 3, // 轮廓宽度
+                outlineColor: Cesium.Color.WHITE // 轮廓颜色
+            }
+        });
+
+        function getPositionProperty(positions) {
+            // 创建SampledPositionProperty，用于平滑移动
+            var positionProperty = new Cesium.SampledPositionProperty();
+            // 添加路径上的关键帧
+            for (var i = 0; i < positions.length; i++) {
+                var time = Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), i * timeInterval, new Cesium.JulianDate()); // 每5秒一个关键帧
+                positionProperty.addSample(time, positions[i]);
+            }
+            // positionProperty.setInterpolationOptions({
+            //     interpolationDegree: 1, // 线性插值
+            //     interpolationAlgorithm: Cesium.HermitePolynomialApproximation // 使用Hermite多项式进行插值
+            // });
+
+            return positionProperty;
+        }
+        // 添加移动点
+        var pointEntity = viewer.entities.add({
+            position: getPositionProperty(positions),
+            // position: positions[0],
+            // point: {
+            //     pixelSize: 10,
+            //     color: Cesium.Color.RED,
+            //     outlineColor: Cesium.Color.YELLOW,
+            //     outlineWidth: 2
+            // }
+            billboard: {
+                image: './SampleData/image/pic.jpg', // 指定图片路径
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                scale: 0.06
+            }
+        });
+        pointEntity.position = getPositionProperty(positions);
+
+        // var timeSamples = [
+        //     0, // 初始时间
+        //     Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), 10, new Cesium.JulianDate()), // 10秒后的时间
+        //     Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), 20, new Cesium.JulianDate()), // 20秒后的时间
+        //     // 可以继续添加更多的样本点...
+        // ];
+        // var startTime = 0;
+        // var duration = Cesium.JulianDate.secondsDifference(timeSamples[timeSamples.length - 1], startTime);
+
+        // var intervalId = setInterval(function() {
+        //     var currentTime = Cesium.JulianDate.addSeconds(startTime, Cesium.JulianDate.secondsDifference(Cesium.JulianDate.now(), startTime) % duration);
+        //     property.setValue(currentTime, property.getValue(currentTime));
+        // }, 1000); // 每秒更新一次
+
+
+        // // 当Cesium Viewer销毁时，清除间隔计时器
+        // viewer.scene.postRender.addEventListener(function() {
+        //     if (viewer.isDestroyed()) {
+        //         clearInterval(intervalId);
+        //     }
+        // });
+
+        // 缩放视图以显示线段
+        viewer.trackedEntity = pointEntity;
+    </script>
+</body>
+
+</html>

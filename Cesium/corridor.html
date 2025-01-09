@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file_2d</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer", {
+            // sceneMode: Cesium.SceneMode.SCENE2D // 设置场景为2d，也可以直接写2
+        });
+
+        function createModel(url, height) {
+            viewer.entities.removeAll();
+
+            // 获取当前相机对象
+            var camera = viewer.camera;
+
+            // 获取当前视图的中心点的笛卡尔坐标
+            var centerCartesian = camera.position;
+
+            // 将笛卡尔坐标转换为地理坐标（经纬度）
+            var cartographic = Cesium.Cartographic.fromCartesian(centerCartesian);
+
+            // 提取经度和纬度
+            var longitude = Cesium.Math.toDegrees(cartographic.longitude);
+            var latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+            // 输出经纬度
+            console.log("屏幕中心的经纬度是:", longitude, latitude);
+
+            const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, 5000);
+
+            
+            // 定义走廊的路径，这里是一个简单的线段
+            var corridorPath = Cesium.Cartesian3.fromDegreesArray([
+                -75.59777, 40.03883,
+                -73.59777, 39.97948,
+                -70.39777, 38.97948
+            ]);
+
+            // 创建PolylineGraphics来表示走廊的中心线
+            // var polyline = viewer.entities.add({
+            //     polyline : {
+            //         positions : corridorPath,
+            //         width : 2,
+            //         material : Cesium.Color.WHITE.withAlpha(0.5)
+            //     }
+            // });
+
+
+
+            // 创建CorridorGraphics来表示走廊
+            var entity = viewer.entities.add({
+                corridor : {
+                    positions : corridorPath,
+                    width : 10000, // 走廊宽度，单位是米
+                    // material : Cesium.Color.RED.withAlpha(0.5)
+                    // material : new Cesium.StripeMaterialProperty({
+                    //     evenColor : Cesium.Color.RED.withAlpha(0.5),
+                    //     oddColor : Cesium.Color.BLUE.withAlpha(0.5),
+                    //     repeatDistance : 50000.0 // 条纹重复的距离
+                    // })
+                    height: 35000,
+                    extrudedHeight: 10000,
+                    // heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                    cornerType: Cesium.CornerType.ROUNDED, // 拐角类型 ROUNDED圆角、MITERED方、BEVELED裁角
+                    material: Cesium.Color.fromCssColorString('#fff').withAlpha(0.5),
+                    outline: true,
+                    outlineColor: Cesium.Color.fromCssColorString('#FF0000'),
+                    outlineWidth: 10000, // 不生效
+                    // clampToGround: true,
+                    // arcType: Cesium.ArcType.RHUMB,
+                    // zIndex: 1000 // 设置height或extrudedHeight时，zIndex会被忽略
+                }
+            });
+
+            setTimeout(() => {
+                console.log(entity)
+                // 更新entity
+                entity.corridor.cornerType.setValue(Cesium.CornerType.MITERED);
+            }, 3000);
+
+            // 可以调整相机视角以更好地查看走廊
+            viewer.zoomTo(entity);
+        }
+
+        setTimeout(() => {
+            createModel("./SampleData/models/CesiumAir/Cesium_Air.glb", 5.0);
+        }, 1000);
+
+
+        var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        // 设置左键点击事件
+        handler.setInputAction(function (event) {
+            // 获取 pick 拾取对象
+            var pick = viewer.scene.pick(event.position);
+            // 判断是否获取到了 pick 
+            if (Cesium.defined(pick)) {
+                // 修改拾取到的entity的样式
+                console.log(pick);
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    </script>
+</body>
+
+</html>

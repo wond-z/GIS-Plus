@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drag with Distance Limit and Elastic Effect</title>
+<style>
+  #draggable {
+    width: 100px;
+    height: 100px;
+    background-color: blue;
+    position: absolute;
+    cursor: move;
+    /* 初始不透明度 */
+    opacity: 1;
+    /* 过渡效果 */
+    transition: opacity 0.2s ease;
+  }
+</style>
+</head>
+<body>
+
+<div id="draggable"></div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  const draggable = document.getElementById('draggable');
+  let isDragging = false;
+  let initialX, initialY;
+  let distanceX = 0, distanceY = 0;
+  let maxDistance = 200; // 设置最大拖拽距离
+  let springConstant = 0.1; // 弹簧常数，控制弹性效果
+  let velocityX = 0, velocityY = 0;
+  let lastTime = 0;
+
+  draggable.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    initialX = e.clientX - draggable.offsetLeft;
+    initialY = e.clientY - draggable.offsetTop;
+    lastTime = Date.now();
+  });
+
+  draggable.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+
+    const deltaX = e.clientX - initialX;
+    const deltaY = e.clientY - initialY;
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastTime;
+
+    // 计算速度
+    velocityX = (deltaX - distanceX) / deltaTime;
+    velocityY = (deltaY - distanceY) / deltaTime;
+
+    // 计算新的拖拽距离
+    distanceX += deltaX;
+    distanceY += deltaY;
+
+    // 限制拖拽距离
+    if (Math.sqrt(distanceX * distanceX + distanceY * distanceY) > maxDistance) {
+      const ratio = maxDistance / Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+      distanceX *= ratio;
+      distanceY *= ratio;
+    }
+
+    // 更新元素位置
+    draggable.style.left = `${initialX + distanceX}px`;
+    draggable.style.top = `${initialY + distanceY}px`;
+
+    // 更新弹簧效果
+    distanceX += velocityX * springConstant * deltaTime;
+    distanceY += velocityY * springConstant * deltaTime;
+
+    // 更新元素位置以反映弹簧效果
+    draggable.style.left = `${initialX + distanceX}px`;
+    draggable.style.top = `${initialY + distanceY}px`;
+
+    // 更新上次的时间戳
+    lastTime = currentTime;
+  });
+
+  draggable.addEventListener('mouseup', function() {
+    isDragging = false;
+  });
+});
+</script>
+
+</body>
+</html>

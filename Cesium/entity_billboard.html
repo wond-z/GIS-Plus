@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广告牌</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+        });
+
+        async function buildCanvas() {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 100;
+            canvas.height = 100;
+
+            // 背景色
+            ctx.fillStyle = "#FF0000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 图片文件路径
+            // const imgSrc = "./SampleData/image/test.svg";
+            const imgSrc = "./SampleData/image/pic.jpg";
+            const image = await loadImage(imgSrc);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            // 添加文字
+            // 先位移坐标到中心
+            // ctx.translate(width / 2, height / 2);
+            // ctx.rotate(10 * Math.PI / 180);
+            ctx.font = "15px 微软雅黑";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "rgb(47, 184, 235)";
+            ctx.fillText("Hello World", canvas.width / 2, canvas.height / 2);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            return canvas;
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+               let image = new Image();
+               image.onload = function() {
+                resolve(image);
+               }
+               image.onerror = reject;
+               image.src = url;
+            });
+        }
+
+        var base64 = 'data:image/jpeg;base64,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';
+        var entity = viewer.entities.add({
+            name: 'Ground Label',
+            position: Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883), // 设置标签的位置
+            billboard: {
+                image: base64,
+                // image: "pic.jpg",
+                // image: buildCanvas(),
+                show: true, // default
+                // eyeOffset: new Cesium.Cartesian3(0.0, 0.0, 0.0), // default
+                horizontalOrigin: Cesium.HorizontalOrigin.CENTER, // default
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM, // default: CENTER
+                scale: 1.0, // default: 1.0
+                // color: Cesium.Color.LIME, // default: WHITE
+                sizeInMeters: true, // 启用像素单位转为实际米数，实现同步缩放效果
+                // rotation: Cesium.Math.PI_OVER_FOUR, // default: 0.0
+                // alignedAxis: Cesium.Cartesian3.ZERO, // default
+                width: 250000, // default: undefined
+                height: 25000, // default: undefined
+                // heightReference: Cesium.HeightReference.RELATIVE_TO_TERRAIN,
+                // pixelOffset: new Cesium.Cartesian2(0, -72),
+                rotation: -Cesium.Math.toRadians(10)
+            },
+            label: {
+                text: 'This is a label', // 设置标签的文本
+                font: '30px sans-serif', // 设置字体和大小
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE, // 设置标签的样式
+                outlineWidth: 2, // 设置轮廓宽度
+                outlineColor: Cesium.Color.BLACK, // 设置轮廓颜色
+                verticalOrigin: Cesium.VerticalOrigin.CENTER, // 设置垂直对齐方式
+                horizontalOrigin: Cesium.HorizontalOrigin.CENTER, // 设置水平对齐方式
+                // heightReference : Cesium.HeightReference.CLAMP_TO_GROUND, // 设置标签贴紧地面
+                // pixelOffset : new Cesium.Cartesian2(0, -200) // 垂直向下偏移50像素
+                // scale: 0.2,
+                // scaleByDistance : new Cesium.NearFarScalar(100, 1, 8e3, 0)
+                scaleByDistance: { near: 0, nearValue: 1, far: 1000, farValue: 0 },
+                distanceDisplayCondition: Number.POSITIVE_INFINITY
+            }
+        });
+
+        viewer.zoomTo(entity);
+
+        // setTimeout(function() {
+        //     entity.billboard.sizeInMeters.setValue(true);
+        // }, 5000)
+
+
+    </script>
+</body>
+
+</html>

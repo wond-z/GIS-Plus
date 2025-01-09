@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>createImageBitmap</title>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="800px" height="600px"></canvas>
+    <script>
+        const canvas = document.getElementById("myCanvas"),
+            ctx = canvas.getContext("2d"),
+            image = new Image();
+
+        // 等待精灵表加载完成
+        image.onload = () => {
+            Promise.all([
+                // 从精灵表中裁剪出两个精灵
+                createImageBitmap(image, 0, 0, 256, 128),
+                createImageBitmap(image, 32, 0, 128, 128),
+                createImageBitmap(image, 0, 0, 256, 256, {
+                    imageOrientation: "flipY",
+                    premultiplyAlpha: "none",
+                    colorSpaceConversion: "default",
+                }),
+            ]).then((sprites) => {
+                // 将每个精灵绘制到画布上
+                // ctx.drawImage(sprites[0], 0, 0);
+                // ctx.drawImage(sprites[1], 128, 128);
+                ctx.drawImage(sprites[2], 256, 256);
+            });
+        };
+
+        // 从图像文件加载精灵表
+        image.src = "./SampleData/tiles/hudong2d6/21/1757979/856258.png";
+    </script>
+</body>
+
+</html>

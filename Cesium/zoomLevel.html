@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+
+        /*根据camera高度近似计算当前层级*/
+        function heightToZoom(height) {
+            var A = 40487.57;
+            var B = 0.00007096758;
+            var C = 91610.74;
+            var D = -40467.74;
+            return Math.round(D + (A - D) / (1 + Math.pow(height / C, B)));
+        }
+
+        /* 
+         *获取当前三维范围 
+         *extent,返回当前模式下地图范围[xmin,ymin,xmax,] 
+         *extent,返回当前模式下地图范围{xmin,ymin,,ymax} 
+         */
+         function getCurrentExtent () {
+            //获取当前三维地图范围 
+            var Rectangle = this.viewer.camera.computeViewRectangle();
+            //地理坐标（弧度）转经纬度坐标
+            var extent = [Rectangle.west / Math.PI * 180, Rectangle.south / Math.PI * 180, Rectangle.east / Math.PI * 180, Rectangle.north / Math.PI * 180];
+            return extent;
+        }
+
+        //监听地图移动完成事件 
+        function onMoveendMap() {
+            const me = this;
+            //获取当前相机高度 
+            let height = Math.ceil(viewer.camera.positionCartographic.height);
+            let zoom = heightToZoom(height);
+            let bounds = getCurrentExtent();
+            console.log('地图变化监听事件', zoom, bounds);
+        };
+
+        viewer.camera.changed.addEventListener(onMoveendMap);
+
+        //监听地图移动完成事件 
+        // this.viewer.camera.moveEnd.addEventListener(this.onMoveendMap);
+
+
+    </script>
+</body>
+
+</html>

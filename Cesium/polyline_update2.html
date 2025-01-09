@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制线</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+
+        // viewer.clock.shouldAnimate = true;
+
+        let startLatitude = 35;
+        let startLongitude = 117;
+        // let startTime = Cesium.JulianDate.now();
+        // viewer.clock.stopTime = Cesium.JulianDate.addSeconds(startTime, 1000);
+        setTimeout(() => {
+            viewer.clock.shouldAnimate = false;
+        }, 5000);
+
+        function getLabel(time, result) {
+            return `名称：11111\n速度：${(Math.random() + 100).toFixed(1)} km`;
+        }
+        function getMidpoint(time, result) {
+            startLongitude += 0.1
+            startLatitude += 0.1
+
+            return Cesium.Cartesian3.fromDegrees(startLongitude, startLatitude)
+        }
+
+        const label = viewer.entities.add({
+            position: new Cesium.CallbackProperty(getMidpoint, false),
+            label: {
+                text: new Cesium.CallbackProperty(getLabel, false),
+                font: "20px sans-serif",
+                pixelOffset: new Cesium.Cartesian2(0.0, 20),
+                showBackground: true,
+                backgroundColor: new Cesium.Color(0.165, 0.165, 0.165, 0.8),
+                backgroundPadding: new Cesium.Cartesian2(7, 5)
+            },
+            billboard: {
+                show: true, // default
+                // 一个属性，指定要用于广告牌的图像，URI或画布
+                image: "./SampleData/image/pic.jpg",
+                scale: 1,
+                width: 74,
+                height: 60,
+                // 指定相对于height属性的高度
+                // heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                // 指定要禁用深度测试的距离相机的距离
+                // disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            }
+        });
+
+    </script>
+</body>
+
+</html>

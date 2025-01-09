@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <button id="removeTerrain">移除地形</button>
+    <div id="cesiumContainer"></div>
+    <script>
+        const viewer = new Cesium.Viewer("cesiumContainer");
+        async function init() {
+            // var terrainProvider = await Cesium.CesiumTerrainProvider.fromUrl('/SampleData/tiles/terrain_chengdu', {
+            //     requestVertexNormals: true,
+            //     requestWaterMask: true,
+            //     requestMetadata: true,
+            //     ellipsoid: Cesium.Ellipsoid.WGS84,
+            // });
+            // const viewer = new Cesium.Viewer("cesiumContainer", {
+            //     terrainProvider: terrainProvider,
+            //     // terrainProvider: await Cesium.CesiumTerrainProvider.fromUrl(
+            //     //     Cesium.IonResource.fromAssetId(3956), {
+            //     //         requestVertexNormals: true
+            //     //     }
+            //     // ),
+            //     // terrainExaggeration: 1,
+            //     // terrainProvider: await Cesium.createWorldTerrainAsync({
+            //     //     requestWaterMask: true, // 开启水面波纹
+            //     //     requestVertexNormals: true // 开启地形光照
+            //     // })
+            // });
+            viewer.scene.terrainProvider = await Cesium.CesiumTerrainProvider.fromUrl('/SampleData/tiles/terrain_chengdu')
+            console.log(viewer.scene.terrainProvider.tilingScheme.rectangle);
+            const rectangle = viewer.scene.terrainProvider.tilingScheme.rectangle;
+            // 获取地形矩形的中心坐标
+            const rectangleCenter = Cesium.Rectangle.center(rectangle);
+            rectangleCenter.height = 5000;
+            console.log(rectangleCenter)
+            // 笛卡尔坐标转经纬度
+            // console.log('Center Latitude:', Cesium.Math.toDegrees(center.latitude));
+            // console.log('Center Longitude:', Cesium.Math.toDegrees(center.longitude));
+            // // 定义目标坐标
+            var targetPosition = Cesium.Cartesian3.fromDegrees(103.726806, 30.610279, 5000);
+            console.log(targetPosition)
+            // 缩放到指定坐标
+            viewer.camera.flyTo({
+                destination : targetPosition
+            });
+        }
+
+        init();
+
+        document.getElementById('removeTerrain').addEventListener('click', function() {
+            viewer.scene.terrainProvider = new Cesium.EllipsoidTerrainProvider({});
+        });
+    </script>
+</body>
+
+</html>

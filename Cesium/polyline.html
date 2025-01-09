@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制线</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+        // 定义线段的顶点，这里使用经纬度数组
+        var positions = Cesium.Cartesian3.fromDegreesArray([
+            -75.59777, 40.03883, -70.0, 35.0, -60.0, 40.0
+        ]);
+
+        // 创建PolylineGraphics对象
+        var polyline = viewer.entities.add({
+            polyline : {
+                positions : positions,
+                width : 5, // 线段宽度
+                material : Cesium.Color.BLUE.withAlpha(0.5), // 线段颜色
+                outline : true, // 是否绘制轮廓
+                outlineWidth : 3, // 轮廓宽度
+                outlineColor : Cesium.Color.WHITE // 轮廓颜色
+            }
+        });
+
+        // 缩放视图以显示线段
+        viewer.zoomTo(polyline);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多边形</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer", {
+            // sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+            // terrainProvider: new Cesium.EllipsoidTerrainProvider()
+        });
+        // 定义线段的顶点，这里使用经纬度数组
+        var positions = Cesium.Cartesian3.fromDegreesArray([
+            -75.59777, 40.03883, -70.0, 35.0, -60.0, 40.0
+        ]);
+
+        // 创建PolylineGraphics对象
+        var entity = viewer.entities.add({
+            // name: '多边形',
+            polygon : {
+                // hierarchy: Cesium.Cartesian3.fromDegreesArray([
+                //     -115.0, 37.0,
+                //     -115.0, 32.0,
+                //     -107.0, 33.0,
+                //     -102.0, 31.0,
+                //     -102.0, 35.0,
+                // ]),
+                hierarchy: new Cesium.CallbackProperty(() => {
+                    // PolygonHierarchy 定义多边形及其孔的线性环的层次结构（空间坐标数组）
+                    return new Cesium.PolygonHierarchy(positions);
+                }, false),
+                // material: Cesium.Color.RED, // 线段颜色
+                material: Cesium.Color.fromCssColorString('#000000'), // 线段颜色
+                // outline : true, // 是否绘制轮廓
+                // outlineWidth : 3, // 轮廓宽度
+                // outlineColor : Cesium.Color.WHITE, // 轮廓颜色
+                // height: 0
+                // fill: Cesium.Color.RED.withAlpha(0.5), // 线段颜色
+            }
+        });
+
+        // 缩放视图以显示线段
+        viewer.zoomTo(entity);
+    </script>
+</body>
+
+</html>

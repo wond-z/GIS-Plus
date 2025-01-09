@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file_2d</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <script src="./@dvgis/cesium-map/dist/cesium.map.min.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        // var customTileProvider = new Cesium.UrlTemplateImageryProvider({
+        //     url : '/roadmap/{z}/{x}/{y}.png', // 本地瓦片的URL模板 location.origin + "/roadmap/{level}/{col}/{row}.png",
+        //     fileExtension: 'png',
+        //     // maximumLevel : 15, // 最大缩放级别
+        //     // minimumLevel : 1 // 最小缩放级别
+        // });
+
+        // var viewer = new Cesium.Viewer("cesiumContainer", {
+        //     // imageryProviders : [customTileProvider],
+        //     imageryProvider: null,
+        //     sceneMode: Cesium.SceneMode.SCENE2D // 设置场景为2d，也可以直接写2
+        // });
+
+
+        // setTimeout(() => {
+        //     // viewer.imageryLayers.removeAll();
+        //     viewer.imageryLayers.addImageryProvider(customTileProvider);
+        // }, 1000);
+
+        // var options = {
+        //     url : '/roadmap/{z}/{x}/{y}.png', // 本地瓦片的URL模板
+        //     style: 'normal', // style: img、vec、normal、dark
+        //     crs: 'WGS84', // 使用84坐标系，默认为：BD09
+        //     maximumLevel : 15,
+        //     minimumLevel : 3
+        // }
+        // var baseLayer = new Cesium.ImageryLayer(new BaiduImageryProvider(options));
+
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+            baseLayerPicker: false, // 底图组件，选择三维数字地球的底图（imagery and terrain）。
+            projectionPicker: false,
+            sceneModePicker: false, // 场景模式，切换2D、3D 和 Columbus View (CV) 模式。
+            navigationHelpButton: false, // 帮助提示，如何操作数字地球。
+            homeButton: false, // 首页，点击之后将视图跳转到默认视角
+            fullscreenButton: false, // 全屏组件
+            vrButton: false, // VR模式
+            infoBox: false, // 信息框
+            selectionIndicator: false, //是否显示选取指示器组件
+            skyBox: false,
+            animation: false, // 动画小组件
+            timeline: false, // 时间轴
+            geocoder: false, // 地理编码（搜索）组件
+            // imageryProvider: null
+            // baseLayer: new Cesium.ImageryLayer(baseLayer, {}),
+            // 如果最初应该看到导航说明，则为true；如果直到用户明确单击该按钮，则该提示不显示，否则为false。
+            // navigationInstructionsInitiallyVisible: false,
+        });
+
+        // async function addLayer() {
+        //     var customTileProvider = await new Cesium.WebMapTileServiceImageryProvider({
+        //         url : '/roadmap/{z}/{x}/{y}.png', // 本地瓦片的URL模板
+        //         tileWidth : 256,
+        //         tileHeight : 256,
+        //         maximumLevel : 15,
+        //         minimumLevel : 3
+        //     });
+        //     viewer.imageryLayers.addImageryProvider(customTileProvider);
+        // }
+        // addLayer();
+
+        // 修改拖拽惯性效果
+        var CesiumViewerSceneController = viewer.scene.screenSpaceCameraController;
+        CesiumViewerSceneController.inertiaSpin = 0.1;
+        CesiumViewerSceneController.inertiaTranslate = 0.1;
+        CesiumViewerSceneController.inertiaZoom = 0.1;
+
+        const options = {
+            url: '/roadmap/{z}/{x}/{y}.png', // 本地瓦片的URL模板
+            style: 'normal', // style: img、vec、normal、dark
+            crs: 'WGS84', // 使用84坐标系，默认为：BD09
+            // maximumLevel : 15,
+            // minimumLevel : 3
+        }
+        // 删除默认图层
+        viewer.imageryLayers.length && viewer.imageryLayers.remove(viewer.imageryLayers.get(0));
+        // 添加百度图层
+        viewer.imageryLayers.add(new Cesium.ImageryLayer(new BaiduImageryProvider(options), {}), 0);
+
+
+        // 定义允许的经纬度范围
+        // const maxLongitude = 125.08; // 最大经度
+        // const maxLatitude = 55.50; // 最大纬度
+        // const minLongitude = 70.78; // 最小经度
+        // const minLatitude = 7.05; // 最小纬度
+
+        // 区间坐标可以在选择好合适的区域后通过getViewExtend()获取
+        const maxLongitude = 142.13238988081693; // 最大经度
+        const maxLatitude = 49.77058143829994; // 最大纬度
+        const minLongitude = 73.50763424038729; // 最小经度
+        const minLatitude = 15.439962056245555; // 最小纬度
+
+        // // 定义视图范围（矩形），这里以经度-120到-110，纬度30到40为例
+        const rectangle = Cesium.Rectangle.fromDegrees(minLongitude, maxLatitude, maxLongitude, minLatitude);
+        console.log('视图范围', rectangle)
+        // // 设置相机的视图范围
+        // viewer.camera.viewingRectangle = rectangle;
+
+        // 使用setView方法将相机移动到指定的经纬度
+        viewer.camera.setView({
+            destination: rectangle,
+            orientation: {
+                heading: Cesium.Math.toRadians(0), // 初始方向
+                pitch: Cesium.Math.toRadians(-90), // 俯仰角，向下看
+                roll: 0 // 翻滚角
+            }
+        });
+
+        // 锁定缩放层级范围
+        viewer.scene.screenSpaceCameraController.maximumZoomDistance = 10000000;
+        viewer.scene.screenSpaceCameraController.minimumZoomDistance = 100000;
+
+
+
+        // 记录上次移动位置
+        let rectangleFlag = rectangle;
+
+        // 监听相机的移动事件
+        viewer.camera.moveEnd.addEventListener(function(movement) {
+            let curRectangle = getViewExtend();
+            console.log('curRectangle', curRectangle);
+            if (curRectangle) {
+                // if (curRectangle.west < rectangle.west || curRectangle.north > rectangle.north || curRectangle.east > rectangle.east || curRectangle.south < rectangle.south) {
+                if (outRangeCount(curRectangle) > 0) {
+                    console.log('超出范围')
+                    if (movement) {
+                        movement.complete();
+                    }
+                    if (outRangeCount(curRectangle) > 1) {
+                        viewer.camera.flyTo({
+                            destination : rectangle,
+                            duration : 0.3
+                        });
+                    } else {
+                        const lastRectangle = Cesium.Rectangle.fromDegrees(rectangleFlag.west, rectangleFlag.north, rectangleFlag.east, rectangleFlag.south);
+                        viewer.camera.flyTo({
+                            destination : lastRectangle,
+                            duration : 0.3
+                        });
+                    }
+                } else {
+                    rectangleFlag = curRectangle;
+                }
+            }
+        });
+
+        function outRangeCount(curRectangle) {
+            let res = 0;
+            if (curRectangle.west < minLongitude) res++;
+            if (curRectangle.north > maxLatitude) res++;
+            if (curRectangle.east > maxLongitude) res++;
+            if (curRectangle.south < minLatitude) res++;
+            return res;
+        }
+
+        // 获取点击位置坐标（需保证点击位置存在地图实体）
+        var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function (click) {
+            console.log(click)
+            // const ray = viewer.camera.getPickRay(click.position);
+            // console.log(ray)
+            // const position = viewer.scene.globe.pick(ray, viewer.scene);
+            var cartesian = viewer.scene.pickPosition(click.position);
+            console.log(cartesian)
+            if (Cesium.defined(cartesian)) {
+                // 在2D模式下，我们可以直接通过Cartesian2来获取经纬度
+                var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+                var longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                var latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                // 输出或处理经纬度
+                console.log('Longitude: ' + longitude + ', Latitude: ' + latitude);
+            }
+
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        // 获取当前视野区间
+        function getViewExtend() {
+            let params = {};
+            let extend = viewer.camera.computeViewRectangle();
+            if (typeof extend === "undefined") {
+                // 2D下会可能拾取不到坐标，extend返回undefined,所以做以下转换
+                let canvas = viewer.scene.canvas;
+                let upperLeft = new Cesium.Cartesian2(0, 0);//canvas左上角坐标转2d坐标
+                let lowerRight = new Cesium.Cartesian2(
+                    canvas.clientWidth,
+                    canvas.clientHeight
+                );//canvas右下角坐标转2d坐标
+
+                let ellipsoid = viewer.scene.globe.ellipsoid;
+                let upperLeft3 = viewer.camera.pickEllipsoid(
+                    upperLeft,
+                    ellipsoid
+                );//2D转3D世界坐标
+
+                let lowerRight3 = viewer.camera.pickEllipsoid(
+                    lowerRight,
+                    ellipsoid
+                );//2D转3D世界坐标
+
+                let upperLeftCartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(
+                    upperLeft3
+                );//3D世界坐标转弧度
+                let lowerRightCartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(
+                    lowerRight3
+                );//3D世界坐标转弧度
+
+                let minx = Cesium.Math.toDegrees(upperLeftCartographic.longitude);//弧度转经纬度
+                let maxx = Cesium.Math.toDegrees(lowerRightCartographic.longitude);//弧度转经纬度
+
+                let miny = Cesium.Math.toDegrees(lowerRightCartographic.latitude);//弧度转经纬度
+                let maxy = Cesium.Math.toDegrees(upperLeftCartographic.latitude);//弧度转经纬度
+
+                console.log("经度：" + minx + "----" + maxx);
+                console.log("纬度：" + miny + "----" + maxy);
+
+                params.west = minx;
+                params.east = maxx;
+                params.south = miny;
+                params.north = maxy;
+            } else {
+                //3D获取方式
+                params.east = Cesium.Math.toDegrees(extend.east);
+                params.north = Cesium.Math.toDegrees(extend.north);
+
+                params.west = Cesium.Math.toDegrees(extend.west);
+                params.south = Cesium.Math.toDegrees(extend.south);
+            }
+            return params;//返回屏幕所在经纬度范围
+        }
+    </script>
+</body>
+
+</html>

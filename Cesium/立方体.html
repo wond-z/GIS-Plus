@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <button id="add">添加立方体</button>
+    <div id="cesiumContainer"></div>
+    <script>
+        async function init() {
+            const viewer = new Cesium.Viewer("cesiumContainer", {
+                sceneMode: 1,
+                terrainProvider: await Cesium.createWorldTerrainAsync({
+                    requestWaterMask: true, // 开启水面波纹
+                    requestVertexNormals: true // 开启地形光照
+                })
+            });
+
+            document.getElementById('add').addEventListener('click', function() {
+                var redBox = viewer.entities.add({
+                    name : 'Red box with black outline',
+                    position: Cesium.Cartesian3.fromDegrees(-107.0, 40.0, 30.0),
+                    box : {
+                        dimensions : new Cesium.Cartesian3(300.0, 300.0, 10.0),
+                        material : Cesium.Color.RED.withAlpha(0.5),
+                        outline : true,
+                        outlineColor : Cesium.Color.BLACK
+                    }
+                });
+                viewer.zoomTo(viewer.entities);
+            });
+        }
+        init();
+
+    </script>
+</body>
+
+</html>

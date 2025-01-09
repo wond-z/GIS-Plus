@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+    <style>
+        /* 通过CSS控制组件显隐及位置 */
+        .cesium-viewer-toolbar,
+        /* 右上角按钮组 */
+        .cesium-viewer-animationContainer,
+        /* 左下角动画控件 */
+        .cesium-viewer-timelineContainer,
+        /* 时间线 */
+        .cesium-viewer-bottom
+
+        /* logo信息 */
+            {
+            display: none !important;
+        }
+
+        .cesium-widget-credits
+
+        /* 隐藏logo图片 */
+            {
+            display: none !important;
+        }
+
+        .cesium-viewer-fullscreenContainer
+
+        /* 全屏按钮 */
+            {
+            display: none !important;
+            position: absolute;
+            top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+
+        function createModel(url, height) {
+            viewer.entities.removeAll();
+
+            const position = Cesium.Cartesian3.fromDegrees(
+                -123.0744619,
+                44.0503706,
+                height
+            );
+            const heading = Cesium.Math.toRadians(135);
+            const pitch = 0;
+            const roll = 0;
+            const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+            const orientation = Cesium.Transforms.headingPitchRollQuaternion(
+                position,
+                hpr
+            );
+
+            const entity = viewer.entities.add({
+                name: url,
+                position: position,
+                orientation: orientation,
+                model: {
+                    uri: url,
+                    // minimumPixelSize: 128,
+                    // maximumScale: 20000,
+                    color: Cesium.Color.fromCssColorString('#00ffff')
+                },
+            });
+            viewer.trackedEntity = entity;
+        }
+        createModel("./SampleData/models/CesiumAir/Cesium_Air.glb", 5.0);
+
+    </script>
+</body>
+
+</html>

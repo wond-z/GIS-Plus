@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+        var scene = viewer.scene;
+        var rectangle;
+
+        function applyImageMaterial(primitive, scene) {
+            //Sandcastle.declare(applyImageMaterial); // For highlighting in Sandcastle.
+            primitive.appearance.material = new Cesium.Material({
+                fabric: {
+                    type: 'Image',
+                    uniforms: {
+                        image: './SampleData/image/test.svg'
+                    }
+                }
+            });
+        }
+
+        function createPrimitives(scene) {
+            rectangle = scene.primitives.add(new Cesium.Primitive({
+                geometryInstances: new Cesium.GeometryInstance({
+                    geometry: new Cesium.RectangleGeometry({
+                        rectangle: Cesium.Rectangle.fromDegrees(90, 22, 117, 40.0),//west,south,east,north 2,-50,152,35
+                        vertexFormat: Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
+                    })
+                }),
+                appearance: new Cesium.EllipsoidSurfaceAppearance({
+                    aboveGround: false
+                })
+            }));
+        }
+
+        createPrimitives(scene);
+        applyImageMaterial(rectangle, scene);
+    </script>
+</body>
+
+</html>

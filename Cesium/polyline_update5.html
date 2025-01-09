@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制线</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer("cesiumContainer");
+        viewer.clock.shouldAnimate = true;
+
+        let lnglatArr = [
+            [121.527589, 38.957547],
+            [121.527825, 38.960166],
+            [121.536472, 38.959098],
+            [121.540442, 38.958464],
+            [121.543489, 38.958131],
+            [121.542888, 38.955861],
+            [121.542266, 38.953325],
+        ];
+        let speed = 100;
+
+        let positions = lnglatArr.map((item) => {
+            return Cesium.Cartesian3.fromDegrees(item[0], item[1], 0.5);
+        });
+
+        // 计算距离
+        function spaceDistance(positions) {
+            let distance = 0;
+            for (let i = 0; i < positions.length - 1; i++) {
+                let point1cartographic = Cesium.Cartographic.fromCartesian(
+                    positions[i]
+                );
+                let point2cartographic = Cesium.Cartographic.fromCartesian(
+                    positions[i + 1]
+                );
+                /**根据经纬度计算出距离**/
+                let geodesic = new Cesium.EllipsoidGeodesic();
+                geodesic.setEndPoints(point1cartographic, point2cartographic);
+                let s = geodesic.surfaceDistance;
+                //返回两点之间的距离 如果带高度的话
+                s = Math.sqrt(
+                    Math.pow(s, 2) +
+                    Math.pow(point2cartographic.height - point1cartographic.height, 2)
+                );
+                distance = distance + s;
+            }
+            return distance.toFixed(2);
+        }
+
+        // 计算每个点位时间和总时间
+        function getSiteTimes(positions, speed) {
+            let timeSum = 0;
+            let times = [];
+            for (let i = 0; i < positions.length; i++) {
+                if (i === 0) {
+                    times.push(0);
+                    continue;
+                }
+                timeSum += this.spaceDistance([positions[i - 1], positions[i]]) / speed;
+                times.push(timeSum);
+            }
+            return {
+                timeSum,
+                siteTimes: times,
+            };
+        }
+
+        let timeObj = getSiteTimes(positions, speed);
+        let startTime = Cesium.JulianDate.fromDate(new Date());
+        let stopTime = Cesium.JulianDate.addSeconds(
+            startTime,
+            timeObj.timeSum,
+            new Cesium.JulianDate()
+        );
+
+        viewer.clock.startTime = startTime.clone();
+        viewer.clock.stopTime = stopTime.clone();
+        viewer.clock.currentTime = startTime.clone();
+
+        // 生成property
+        var property = new Cesium.SampledPositionProperty();
+        for (var i = 0; i < positions.length; i++) {
+            const time = Cesium.JulianDate.addSeconds(
+                startTime,
+                timeObj.siteTimes[i],
+                new Cesium.JulianDate()
+            );
+            property.addSample(time, positions[i]);
+        }
+
+        // 添加路径
+        viewer.entities.add({
+            polyline: {
+                positions: positions,
+                width: 5, // 线段宽度
+                material: Cesium.Color.YELLOW.withAlpha(1), // 线段颜色
+                outline: true, // 是否绘制轮廓
+                outlineWidth: 3, // 轮廓宽度
+                outlineColor: Cesium.Color.WHITE // 轮廓颜色
+            }
+        });
+
+        let animateEntity = viewer.entities.add({
+            // 实体可用性，在指定时间内返回有效数据
+            // availability: new Cesium.TimeIntervalCollection([
+            //     new Cesium.TimeInterval({
+            //         start: startTime,
+            //         stop: stopTime,
+            //     }),
+            // ]),
+            // 位置信息随时间变化property
+            position: property,
+            // 实体方向
+            orientation: new Cesium.VelocityOrientationProperty(property),
+            billboard: {
+                image: './SampleData/image/pic.jpg',
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                scale: 0.02
+            },
+            // 轨迹路径
+            // path: {
+            //     resolution: 1,
+            //     width: 10,
+            //     material: Cesium.Color.RED,
+            // },
+        });
+
+        viewer.trackedEntity = animateEntity;
+    </script>
+</body>
+
+</html>

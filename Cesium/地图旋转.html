@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            sceneMode: Cesium.SceneMode.SCENE2D,
+            mapMode2D: Cesium.MapMode2D.ROTATE, // 2D地图可以绕z轴旋转
+            // mapMode2D: Cesium.MapMode2D.INFINITE_SCROLL // 2D地图可以水平放心循环滚动
+        });
+
+        // 旋转地图到指定的角度，这里假设我们想要旋转到45度
+        var headingInRadians = Cesium.Math.toRadians(45.0);
+
+        // 设置相机的视图，包括目的地和方向
+        viewer.scene.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(0, 0), // 替换为实际的经纬度坐标和高度
+            orientation: {
+                heading: headingInRadians, // 设置航向角为45度
+                pitch: 0, // 俯仰角，2D模式下通常不需要调整
+                roll: 0 // 横滚角，2D模式下通常不需要调整
+            }
+        });
+    </script>
+</body>
+
+</html>

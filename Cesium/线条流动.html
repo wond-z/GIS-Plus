@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        // 假设已经初始化了Cesium.Viewer实例为viewer
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            contextOptions: {
+                requestWebgl1: true,
+            }
+        });
+
+        function PolylineTrailLinkMaterialProperty(color, duration) {
+            this._definitionChanged = new Cesium.Event();
+            this._color = undefined;
+            this._colorSubscription = undefined;
+            this.color = color;
+            this.duration = duration || 3000;
+            this._time = (new Date()).getTime();
+            this.isTranslucent = function () {
+                return true;
+            }
+        }
+        Object.defineProperties(PolylineTrailLinkMaterialProperty.prototype, {
+            isConstant: {
+                get: function () {
+                    return false;
+                }
+            },
+            definitionChanged: {
+                get: function () {
+                    return this._definitionChanged;
+                }
+            },
+            color: Cesium.createPropertyDescriptor('color')
+        });
+        PolylineTrailLinkMaterialProperty.prototype.getType = function (time) {
+            return 'PolylineTrailLink';
+        }
+        PolylineTrailLinkMaterialProperty.prototype.getValue = function (time, result) {
+            if (!Cesium.defined(result)) {
+                result = {};
+            }
+            result.color = Cesium.Property.getValueOrClonedDefault(this._color, time, Cesium.Color.WHITE, result.color);
+            result.image = Cesium.Material.PolylineTrailLinkImage;
+            result.time = (((new Date()).getTime() - this._time) % this.duration) / this.duration;
+            return result;
+        }
+        PolylineTrailLinkMaterialProperty.prototype.equals = function (other) {
+            return this === other ||
+                (other instanceof PolylineTrailLinkMaterialProperty &&
+                Cesium.Property.equals(this._color, other._color))
+        }
+        Cesium.PolylineTrailLinkMaterialProperty = PolylineTrailLinkMaterialProperty;
+
+        Cesium.Material.PolylineTrailLinkType = 'PolylineTrailLink';
+        // Cesium.Material.PolylineTrailLinkImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK8AAAAlCAIAAAC72y6cAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAGsGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDggNzkuMTY0MDM2LCAyMDE5LzA4LzEzLTAxOjA2OjU3ICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgMjEuMCAoV2luZG93cykiIHhtcDpDcmVhdGVEYXRlPSIyMDI0LTEyLTMxVDEzOjEzOjMyKzA4OjAwIiB4bXA6TW9kaWZ5RGF0ZT0iMjAyNC0xMi0zMVQxMzoyODo1OSswODowMCIgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyNC0xMi0zMVQxMzoyODo1OSswODowMCIgZGM6Zm9ybWF0PSJpbWFnZS9wbmciIHBob3Rvc2hvcDpDb2xvck1vZGU9IjMiIHBob3Rvc2hvcDpJQ0NQcm9maWxlPSJzUkdCIElFQzYxOTY2LTIuMSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo2MjRkNmI1My04NGJlLWM3NGQtYTI3Zi03ZTg1OWI0YTZlZjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6ZDI1OGU4M2YtMjM0Yy0zYzRiLWEwYWEtMTE4ZWUyZGYzNTE1IiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6ZDI1OGU4M2YtMjM0Yy0zYzRiLWEwYWEtMTE4ZWUyZGYzNTE1Ij4gPHhtcE1NOkhpc3Rvcnk+IDxyZGY6U2VxPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0iY3JlYXRlZCIgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDpkMjU4ZTgzZi0yMzRjLTNjNGItYTBhYS0xMThlZTJkZjM1MTUiIHN0RXZ0OndoZW49IjIwMjQtMTItMzFUMTM6MTM6MzIrMDg6MDAiIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkFkb2JlIFBob3Rvc2hvcCAyMS4wIChXaW5kb3dzKSIvPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0ic2F2ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6YjZkYzVlMjItZTczYy0xODQ0LTkxOWEtMjlmNWQxYmZjNzAyIiBzdEV2dDp3aGVuPSIyMDI0LTEyLTMxVDEzOjI3OjUyKzA4OjAwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgMjEuMCAoV2luZG93cykiIHN0RXZ0OmNoYW5nZWQ9Ii8iLz4gPHJkZjpsaSBzdEV2dDphY3Rpb249InNhdmVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjYyNGQ2YjUzLTg0YmUtYzc0ZC1hMjdmLTdlODU5YjRhNmVmOCIgc3RFdnQ6d2hlbj0iMjAyNC0xMi0zMVQxMzoyODo1OSswODowMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDIxLjAgKFdpbmRvd3MpIiBzdEV2dDpjaGFuZ2VkPSIvIi8+IDwvcmRmOlNlcT4gPC94bXBNTTpIaXN0b3J5PiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PuQcgWoAABUmSURBVHic7Zxdkx23jYYfgOw+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";
+        Cesium.Material.PolylineTrailLinkImage = "./SampleData/image/test.png";
+        Cesium.Material.PolylineTrailLinkSource = " czm_material czm_getMaterial(czm_materialInput materialInput)\n\
+                                                        {\n\
+                                                            czm_material material = czm_getDefaultMaterial(materialInput);\n\
+                                                            vec2 st = materialInput.st;\n\
+                                                            vec4 colorImage = texture2D(image, vec2(fract(st.s - time), st.t));\n\
+                                                            material.alpha = colorImage.a * color.a;\n\
+                                                            material.diffuse = (colorImage.rgb+color.rgb)/2.0;\n\
+                                                            return material;\n\
+                                                        }";
+        Cesium.Material._materialCache.addMaterial(Cesium.Material.PolylineTrailLinkType, {
+            fabric: {
+                type: Cesium.Material.PolylineTrailLinkType,
+                uniforms: {
+                    // color: new Cesium.Color(0.0, 0.0, 1.0, 0.5),
+                    color: new Cesium.Color(1.0, 0.0, 0.0, 0.5),
+                    image: Cesium.Material.PolylineTrailLinkImage,
+                    time: 20,
+                    repeat : {
+                        x : 100,
+                        y : 100
+                    }
+                },
+                source: Cesium.Material.PolylineTrailLinkSource
+            },
+            translucent: function (material) {
+                return true;
+            }
+        });
+
+        // 创建一个Polyline实例
+        var positions = Cesium.Cartesian3.fromDegreesArray([
+            116.0, 21.0,
+            115.0, 23.0,
+            114.0, 22.0,
+        ]);
+
+        const material = new Cesium.PolylineTrailLinkMaterialProperty(Cesium.Color.RED, 2000);
+        const material1 = new Cesium.PolylineTrailLinkMaterialProperty(Cesium.Color.BLUE, 2000);
+
+        var polyline = viewer.entities.add({
+            polyline: {
+                positions: positions,
+                width: 50,
+                material: material
+            }
+        });
+        var positions1 = Cesium.Cartesian3.fromDegreesArray([
+            117.0, 22.0,
+            116.0, 24.0,
+        ]);
+
+        var polyline1 = viewer.entities.add({
+            polyline: {
+                positions: positions1,
+                width: 50,
+                material: material1
+            }
+        });
+        viewer.zoomTo(polyline);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <input type="file">
+    <div id="cesiumContainer"></div>
+    <script>
+        const viewer = new Cesium.Viewer("cesiumContainer");
+        const input = document.querySelector('input');
+        // 选择tfw文件，读取信息
+        input.addEventListener('change', function () {
+            console.log(this.files); // 我们是无法直接在 this.files 对象中获取到 数据流的，需要使用 FileReader 对象去 读取的。
+            const file = this.files[0];
+            const reader = new FileReader();
+            reader.onload = function () {
+                console.log(this.result);  // 文件数据流，变成相应格式数据了。（ 文本文件，就输出文本内的文本数据 ）
+                mapInit(this.result);
+            };
+            reader.readAsText(file);
+        }, false);
+
+        // 获取ASCII头文件（*.tfw）的每行数据
+        function parseTFW(tfwContent) {
+            const lines = tfwContent.split('\n');
+            return {
+                pixelSizeX: parseFloat(lines[0]),
+                rotationX: parseFloat(lines[1]),
+                rotationY: parseFloat(lines[2]),
+                pixelSizeY: parseFloat(lines[3]),
+                leftX: parseFloat(lines[4]),
+                topY: parseFloat(lines[5])
+            };
+        }
+
+        // 信息数据初始化
+        async function mapInit(tfwData) {
+            const { pixelSizeX, rotationX, rotationY, pixelSizeY, leftX, topY } = parseTFW(tfwData);
+            // 定义图像宽高（理论上需要从tif图像属性上动态获取，此处为了方便直接定义
+            const imageWidth = 2723;
+            const imageHeight = 1789;
+            // 计算各方向范围值，得到图像展示范围
+            const west = leftX;
+            const south = topY + (imageHeight * pixelSizeY);
+            const east = leftX + (imageWidth * pixelSizeX);
+            const north = topY;
+
+            const rectangle = Cesium.Rectangle.fromDegrees(west, south, east, north);
+
+            // entity元素方式
+            // const entity = viewer.entities.add({
+            //     rectangle : {
+            //         coordinates : rectangle,
+            //         material : new Cesium.ImageMaterialProperty({
+            //             image : '/SampleData/image/DEM84.png',  // 替换为实际的图像路径
+            //             transparent : true
+            //         })
+            //     }
+            // });
+            // viewer.zoomTo(entity);
+
+            // // 图片图层方式
+            // const entity = viewer.imageryLayers.addImageryProvider(
+            //     new Cesium.SingleTileImageryProvider({
+            //         url: '/SampleData/image/DEM84.png',
+            //         rectangle: rectangle,
+            //         ellipsoid: Cesium.Ellipsoid.WGS84,
+            //         tileWidth: imageWidth,
+            //         tileHeight: imageHeight,
+            //     })
+            // );
+            // viewer.zoomTo(entity);
+
+
+            // // 图层服务方式（最优方式）
+            // try {
+            //     const imageryLayer = viewer.imageryLayers.addImageryProvider(
+            //         await Cesium.IonImageryProvider.fromAssetId(2714362),
+            //     );
+            //     await viewer.zoomTo(imageryLayer);
+            // } catch (error) {
+            //     console.log(error);
+            // }
+
+
+            // 本地瓦片图层加载方式（含tilemapresource.xml）
+            const tmsProvider = await Cesium.TileMapServiceImageryProvider.fromUrl('/SampleData/tiles/DEM84', {
+                fileExtension: 'png',  // 或者 'jpg'，根据你的瓦片文件格式
+                // rectangle: rectangle,
+                // ellipsoid: Cesium.Ellipsoid.WGS84,
+                // tileWidth: imageWidth,
+                // tileHeight: imageHeight,
+            })
+            const imageryLayer = viewer.imageryLayers.addImageryProvider(tmsProvider);
+            viewer.zoomTo(imageryLayer);
+
+            // // 使用geoserver发布tif影像，再添加到地图中
+            // const tifLayer = new Cesium.WebMapServiceImageryProvider({
+            //     url: 'http://192.168.6.45:8080/geoserver/cesium/wms', // geoserver服务地址
+            //     layers: 'cesium:DEM84', // 工作区名：图层名
+            //     rectangle: rectangle,
+            //     parameters: {
+            //         service: 'WMS',
+            //         format: 'image/png',
+            //         // srs: 'EPSG:4326',
+            //         // crs: 'EPSG:4326',
+            //         transparent: true,
+            //     }
+            // });
+            // const imageryLayer = viewer.imageryLayers.addImageryProvider(tifLayer);
+            // viewer.zoomTo(imageryLayer);
+
+            // 测试中。。。本地瓦片图层服务方式（不含tilemapresource.xml）
+            // const tmsProvider = new Cesium.UrlTemplateImageryProvider({
+            //     url:'/SampleData/tiles/images/{z}/{x}/{y}.png',
+            //     fileExtension:"png",
+            //     // rectangle: rectangle,
+            // });
+            // const imageryLayer = viewer.imageryLayers.addImageryProvider(tmsProvider);
+            // viewer.zoomTo(imageryLayer);
+        }
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制线</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+    <style>* {padding: 0; margin: 0};html, body{padding: 0; margin: 0}</style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <button id="restart">Restart</button>
+    <script>
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+            shouldAnimate: true,
+        });
+
+        const czmlPath = "./SampleData/";
+        let vehicleEntity;
+
+        // 添加一个空白CzmlDataSource来保存我们的多部分实体
+        const dataSource = new Cesium.CzmlDataSource();
+        viewer.dataSources.add(dataSource);
+
+        // 这个演示展示了如何将单个路径分解为多个CZML流。
+        const partsToLoad = [
+            {
+                url: "MultipartVehicle_part1.czml",
+                range: [0, 1500],
+                requested: false,
+                loaded: false,
+            },
+            {
+                url: "MultipartVehicle_part2.czml",
+                range: [1500, 3000],
+                requested: false,
+                loaded: false,
+            },
+            {
+                url: "MultipartVehicle_part3.czml",
+                range: [3000, 4500],
+                requested: false,
+                loaded: false,
+            },
+        ];
+
+        // 使用process方法将其添加到dataSource.
+        function processPart(part) {
+            dataSource.process(czmlPath + part.url).then(function () {
+                // 镜头锁定车辆
+                if (!viewer.trackedEntity) {
+                    viewer.trackedEntity = vehicleEntity = dataSource.entities.getById(
+                        "Vehicle"
+                    );
+                }
+            });
+        }
+
+        // 加载第一部分路径
+        processPart(partsToLoad[0]);
+
+        // 在时钟自然到达之前加载一个新部分
+        // 请注意，这无法预测用户何时可以快进到它
+        const preloadTimeInSeconds = 100;
+        viewer.clock.onTick.addEventListener(function (clock) {
+            // 本示例使用从开始的时间偏移来确定哪些零件需要加载
+            const timeOffset = Cesium.JulianDate.secondsDifference(
+                clock.currentTime,
+                clock.startTime
+            );
+
+            // 将零件列表筛选为当前需要加载的零件。
+            // 然后，处理每个需要加载的零件。
+            partsToLoad.filter(function (part) {
+                return (
+                    !part.requested &&
+                    timeOffset >= part.range[0] - preloadTimeInSeconds &&
+                    timeOffset <= part.range[1]
+                );
+            }).forEach(function (part) {
+                processPart(part);
+            });
+
+            if (vehicleEntity) {
+                const fuel = vehicleEntity.properties.fuel_remaining.getValue(
+                    clock.currentTime
+                );
+                if (Cesium.defined(fuel)) {
+                    // fuelDisplay.textContent = `Fuel: ${fuel.toFixed(2)} gal`;
+                }
+            }
+        });
+
+        // 重置
+        document.getElementById('restart').addEventListener('click', function () {
+            // Put things back to the starting position.
+            viewer.clock.currentTime = viewer.clock.startTime;
+            viewer.clock.shouldAnimate = true;
+
+            partsToLoad.forEach(function (part) {
+                part.requested = false;
+                part.loaded = false;
+            });
+
+            dataSource.entities.removeAll();
+            processPart(partsToLoad[0]);
+        });
+    </script>
+</body>
+
+</html>

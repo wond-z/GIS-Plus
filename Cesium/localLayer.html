@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium flb_file_2d</title>
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <script src="./@dvgis/cesium-map/dist/cesium.map.min.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+            sceneMode: Cesium.SceneMode.SCENE2D, // 设置为2D模式
+            baseLayerPicker: false, // 底图组件，选择三维数字地球的底图（imagery and terrain）。
+            projectionPicker: false,
+            sceneModePicker: false, // 场景模式，切换2D、3D 和 Columbus View (CV) 模式。
+            navigationHelpButton: false, // 帮助提示，如何操作数字地球。
+            homeButton: false, // 首页，点击之后将视图跳转到默认视角
+            fullscreenButton: false, // 全屏组件
+            vrButton: false, // VR模式
+            infoBox: false, // 信息框
+            selectionIndicator: false, //是否显示选取指示器组件
+            skyBox: false,
+            animation: false, // 动画小组件
+            timeline: false, // 时间轴
+            geocoder: false, // 地理编码（搜索）组件
+            // imageryProvider: null
+            // baseLayer: new Cesium.ImageryLayer(baseLayer, {}),
+            // 如果最初应该看到导航说明，则为true；如果直到用户明确单击该按钮，则该提示不显示，否则为false。
+            // navigationInstructionsInitiallyVisible: false,
+        });
+
+        // 删除默认图层
+        viewer.imageryLayers.length && viewer.imageryLayers.remove(viewer.imageryLayers.get(0));
+
+
+        // var customTileProvider = new Cesium.UrlTemplateImageryProvider({
+        //     url : Cesium.buildModuleUrl('CesiumUnminified/Assets/Textures/NaturalEarthII') + '/{z}/{x}/{reverseY}.jpg',
+        //     tilingScheme : new Cesium.GeographicTilingScheme(),
+        //     maximumLevel : 5
+        // });
+        
+        // 添加百度图层（百度地图需使用cesium-map扩展加载）
+        // const options = {
+        //     url: '/SampleData/tiles/roadmap/{z}/{x}/{y}.png', // 本地瓦片的URL模板
+        //     style: 'normal', // style: img、vec、normal、dark
+        //     crs: 'WGS84', // 使用84坐标系，默认为：BD09
+        //     // maximumLevel : 15,
+        //     // minimumLevel : 3
+        // }
+        // viewer.imageryLayers.add(new Cesium.ImageryLayer(new BaiduImageryProvider(options), {}), 0);
+        
+
+        // 加载高德离线瓦片图（使用cesium-map扩展加载）
+        // var options = {
+        //     url: '/SampleData/tiles/amap/{z}/{x}/{y}.jpg', // 本地瓦片的URL模板
+        //     style: 'img', // style: img、elec、cva
+        //     crs: 'WGS84' // 使用84坐标系，默认为：GCJ02
+        // }
+        // viewer.imageryLayers.add(new Cesium.ImageryLayer(new AmapImageryProvider(options)));
+
+
+        // 加载高德离线瓦片图
+        var layer = new Cesium.UrlTemplateImageryProvider({
+            url:'/SampleData/tiles/amap/{z}/{x}/{y}.jpg',
+            fileExtension:"png"
+        });
+        viewer.imageryLayers.addImageryProvider(layer);
+
+        // 高德在线影像图
+        // var layer = new Cesium.UrlTemplateImageryProvider({
+        //     url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
+        //     minimumLevel: 3,
+        //     maximumLevel: 18
+        // })
+        // viewer.imageryLayers.addImageryProvider(layer);
+
+
+        // 定位到指定位置
+        // var cartographic = Cesium.Cartographic.fromDegrees(105.588861,29.425496);
+        // var cartesian = Cesium.Cartographic.toCartesian(cartographic);
+        // viewer.camera.setView({
+        //     destination : cartesian,
+        //     orientation : {
+        //         heading : Cesium.Math.toRadians(0.0),
+        //         pitch : Cesium.Math.toRadians(-90.0),
+        //         roll : 0.0
+        //     }
+        // });
+
+
+
+
+        // var longitude = 105.588861;
+        // var latitude = 29.425496;
+        // var height = 100; // 高度，单位为米，0表示地表
+        // // 将经纬度转换为Cartesian3坐标
+        // var position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+        // // 创建Entity对象
+        // var entity = viewer.entities.add({
+        //     position : position,
+        //     // 添加一个点图形
+        //     billboard : {
+        //         // 你可以设置点的大小、颜色、垂直偏移等属性
+        //         image : './pic.jpg', // 设置点的图片
+        //         width : 32, // 点的宽度
+        //         height : 32, // 点的高度
+        //         verticalOrigin : Cesium.VerticalOrigin.BOTTOM, // 垂直方向的原点
+        //         // pixelOffset : new Cesium.Cartesian2(0, -20), // 在位置上的偏移量
+        //         // scaleByDistance : new Cesium.NearFarScalar(1.5e5, 50, 1e5, 0.0) // 根据距离调整大小
+        //     }
+        // });
+        // // 如果需要，可以调整相机的视图以显示这个点
+        // viewer.zoomTo(entity);
+
+
+    </script>
+</body>
+
+</html>
