@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet</title>
+    <link rel="stylesheet" href="./leaflet/leaflet.css" />
+    <script src="./leaflet/leaflet.js"></script>
+    <style>
+        #map {
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        // Web地图服务规范包括WMS(网络地图服务)、WMTS(网络地图瓦片服务)、TMS(瓦片地图服务)等
+
+        var map = L.map('map').setView([51.505, -0.09], 13); // setView([纬度lat，经度lon]，层级)
+
+        // L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //     maxZoom: 19,
+        //     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        // }).addTo(map);
+
+        
+        var wmsLayer = L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+            // layers: 'TOPO-OSM-WMS',
+            layers: 'OSM-Overlay-WMS',
+        }).addTo(map);
+
+        // 添加标记
+        var marker = L.marker([51.5, -0.09]).addTo(map);
+
+        // 添加圆形
+        var circle = L.circle([51.508, -0.11], {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.5,
+            radius: 500
+        }).addTo(map);
+
+        // 添加多边形
+        var polygon = L.polygon([
+            [51.509, -0.08],
+            [51.503, -0.06],
+            [51.51, -0.047]
+        ]).addTo(map);
+    </script>
+</body>
+
+</html>

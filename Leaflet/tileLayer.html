@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>离线瓦片图</title>
+    <link rel="stylesheet" href="./leaflet/leaflet.css" />
+    <script src="./leaflet/leaflet-src.js"></script>
+    <style>
+        #map {
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        var map = L.map('map').setView([34.505, 108.09], 8); // setView([纬度lat，经度lon]，层级)
+
+        // 添加离线地图
+        const url = 'http://127.0.0.1:5501/amap/{z}/{x}/{y}.jpg'
+        const tileLayer = L.tileLayer(url, {
+            minZoom:4,
+            maxZoom:16
+        });
+        console.log(tileLayer);
+        tileLayer.addTo(map);
+    </script>
+</body>
+
+</html>
