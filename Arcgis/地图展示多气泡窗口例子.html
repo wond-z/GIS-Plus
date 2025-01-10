@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <!-- 
+  ArcGIS API for JavaScript, https://js.arcgis.com
+  For more information about the map_infowindow sample, read the original sample description at developers.arcgis.com.
+  https://developers.arcgis.com/javascript/3/jssamples/map_infowindow.html  
+  -->
+    <title>Non graphic info window</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.36/esri/css/esri.css">
+    <style>
+    html,
+    body,
+    #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    </style>
+    <script src="https://js.arcgis.com/3.36/"></script>
+    <script>
+    var map;
+    require([
+        "esri/map",
+        "esri/geometry/Point",
+        "esri/SpatialReference",
+        "dojo/domReady!"
+    ], function(
+        Map, Point, SpatialReference
+    ) {
+        map = new Map("map", {
+            basemap: "satellite",
+            center: [120.5, 31.5],
+            zoom: 7
+        });
+
+        map.on("load", function() {
+            map.infoWindow.resize(250, 100);
+            
+        });
+
+        setTimeout(function() {
+            var point = new Point(33.55478600599292, 117.59466539323209, new SpatialReference({wkid: 4236 }));
+            console.log(point)
+            map.infoWindow.setTitle("坐标");
+            map.infoWindow.setContent(
+                "lat/lon : 坐标点" +
+                "<br>screen x/y : 屏幕位置"
+            );
+            var pt = {spatialReference: {wkid: 102100}, x: 13228103.787799742, y: 3754724.4793817904}
+            // map.infoWindow.show(pt, map.getInfoWindowAnchor({spatialReference: undefined, x: 616, y: 153}));
+            map.infoWindow.show(point);
+        }, 1000)
+
+        map.on("click", addPoint);
+
+        function addPoint(evt) {
+            var latitude = evt.mapPoint.getLatitude();
+            var longitude = evt.mapPoint.getLongitude();
+            map.infoWindow.setTitle("Coordinates");
+            map.infoWindow.setContent(
+                "lat/lon : " + latitude.toFixed(2) + ", " + longitude.toFixed(2) +
+                "<br>screen x/y : " + evt.screenPoint.x + ", " + evt.screenPoint.y
+            );
+            map.infoWindow.show(evt.mapPoint, map.getInfoWindowAnchor(evt.screenPoint));
+        }
+    });
+    </script>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+</html>

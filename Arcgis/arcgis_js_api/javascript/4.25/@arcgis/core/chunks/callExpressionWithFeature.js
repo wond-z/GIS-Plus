@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import e from"../core/Error.js";import{L as r}from"./Logger.js";import{a as t}from"./maybe.js";import{b as a,u as o,a as n,c as s}from"./quantizationUtils.js";function i(i,c,m,l,p){if(t(i))return null;const f=i.referencesGeometry()&&p?function(t,i,c){const{transform:m,hasZ:l,hasM:p}=c;u.has(i)||u.set(i,function(t){const i={};switch(t){case"esriGeometryPoint":return(e,r,t,a)=>s(r,i,e,t,a);case"esriGeometryPolygon":return(e,r,t,a)=>n(r,i,e,t,a);case"esriGeometryPolyline":return(e,r,t,a)=>o(r,i,e,t,a);case"esriGeometryMultipoint":return(e,r,t,o)=>a(r,i,e,t,o);default:return r.getLogger("esri.views.2d.support.arcadeOnDemand").error(new e("mapview-arcade",`Unable to handle geometryType: ${t}`)),e=>e}}(i));const f=u.get(i)(t.geometry,m,l,p);return{...t,geometry:f}}(c,l,p):c,g=i.repurposeFeature(f);try{return i.evaluate({...m,$feature:g})}catch(e){return r.getLogger("esri.views.2d.support.arcadeOnDemand").warn("Feature arcade evaluation failed:",e),null}}const u=new Map;export{i as c};

@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import{i as e}from"./maybe.js";import{e as r,a as t,c as s}from"./euclideanAreaMeasurementUtils.js";import"../geometry.js";import{a as o}from"./quantityUtils.js";import{geodesicArea as n}from"../geometry/geometryEngine.js";import{projectPolygonToWGS84ComparableLonLat as a}from"../geometry/projection.js";import{geodesicAreas as m}from"../geometry/support/geodesicUtils.js";import{g as i}from"./automaticLengthMeasurementUtils.js";import u from"../geometry/SpatialReference.js";function c(e){return o(Math.abs(m([e],"square-meters")[0]),"square-meters")}function f(e){try{return o(Math.abs(n(e,"square-meters")),"square-meters")}catch(e){return null}}function p(e){const r=[];return a(e,r)?o(Math.abs(m([{type:"polygon",rings:r,spatialReference:u.WGS84}],"square-meters")[0]),"square-meters"):null}function g(o,n,a=s()){if("on-the-ground"===n){const t=function(e){const{spatialReference:r}=e;return i(r,c,f,p,e)}(o);return e(t)?t:r(o,a)}return t(o,a)}function l(e,r=s()){return g(e,"on-the-ground",r)}export{g as a,l as b};

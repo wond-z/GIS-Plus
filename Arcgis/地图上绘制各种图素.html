@@ -1,0 +1,227 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>Edit features with the Editor widget | Sample | ArcGIS API for JavaScript 4.19</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.19/"></script>
+    <style>
+    html,
+    body,
+    #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+    }
+
+    .esri-editor .esri-item-list__scroller {
+        max-height: 350px;
+    }
+    </style>
+    <script>
+        require([
+            "esri/WebMap",
+            "esri/views/MapView",
+            "esri/widgets/Editor",
+            "esri/Graphic",
+        ], (
+            WebMap, MapView,
+            Editor,
+            Graphic
+        ) => {
+
+            let pointLayer, lineLayer, polygonLayer;
+
+            // Create a map from the referenced webmap item id
+            const webmap = new WebMap({
+                portalItem: {
+                    id: "459a495fc16d4d4caa35e92e895694c8"
+                }
+            });
+
+            const view = new MapView({
+                container: "viewDiv",
+                map: webmap
+            });
+            view.on('click', e => {
+                console.log(e)
+                //     var lat = Math.round(e.mapPoint.getLatitude() * 1000) / 1000;
+                // var lon = Math.round(e.mapPoint.getLongitude() * 1000) / 1000;
+                // console.log(lat+","+lon);
+                var mapPointx = Math.round(e.mapPoint.x);
+                var mapPointy = Math.round(e.mapPoint.y);
+                // let point = {
+                //   type: "point",  // autocasts as new Point()
+                //   longitude: mapPointx,
+                //   latitude: mapPointy,
+                // };
+
+                // // Create a symbol for drawing the point
+                // let markerSymbol = {
+                //   type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+                //   color: [0, 0, 0]
+                // };
+                // var colorsss = new Color([255, 255, 255])
+                // // Create a graphic and add the geometry and symbol to it
+                // let pointGraphic = new Graphic({
+                //   geometry: point,
+                //   symbol: markerSymbol
+                // });
+                const pointGraphic = new Graphic({
+                    geometry: {
+                        type: 'point',
+                        // 点的位置
+                        x: mapPointx,
+                        y: mapPointy,
+                        z: 0
+                    },
+                    symbol: {
+                        // 类型有 图片标记 和 点
+                        type: 'picture-marker',
+                        // 图片地址，可以网络路径或本地路径（PS：base64亦可）
+                        url: 'http://127.0.0.1:11001/img?imgPath=/kaa261b35-32ff-4183-8b31-0284b4add67d/1.0.0.1/QQ图片20210510133139.gif',
+                        // 图片的大小
+                        width: '32px',
+                        height: '48px'
+                    },
+                    attributes: {
+                        Foo: 'Hello world!'
+                    }
+                })
+                console.log(pointGraphic);
+                // window.pointGraphic.push(pointGraphic);
+                // pointGraphic
+                view.graphics.add(pointGraphic)
+                view.hitTest(e)
+                    .then(res => {
+                        console.log(res);
+                        if (res.results.length !== 0) {
+                            alert(JSON.stringify(res.results[0].graphic.attributes));
+                        }
+                    })
+
+            })
+            view.when(() => {
+                view.map.loadAll().then(() => {
+                    view.map.allLayers.forEach((layer) => {
+                        if (layer.type === 'feature') {
+                            switch (layer.geometryType) {
+                                case "polygon":
+                                    polygonLayer = layer;
+                                    break;
+                                case "polyline":
+                                    lineLayer = layer;
+                                    break;
+                                case "point":
+                                    pointLayer = layer;
+                                    break;
+                            }
+                        }
+                    });
+
+                    // Create layerInfos for layers in Editor. This
+                    // sets the fields for editing.
+
+                    const pointInfos = {
+                        layer: pointLayer,
+                        fieldConfig: [{
+                            name: "HazardType",
+                            label: "Hazard type"
+                        }, {
+                            name: "Description",
+                            label: "Description"
+                        }, {
+                            name: "SpecialInstructions",
+                            label: "Special Instructions"
+                        }, {
+                            name: "Status",
+                            label: "Status"
+                        }, {
+                            name: "Priority",
+                            label: "Priority"
+                        }]
+                    };
+
+                    const lineInfos = {
+                        layer: lineLayer,
+                        fieldConfig: [{
+                            name: "Severity",
+                            label: "Severity"
+                        }, {
+                            name: "blocktype",
+                            label: "Type of blockage"
+                        }, {
+                            name: "fullclose",
+                            label: "Full closure"
+                        }, {
+                            name: "active",
+                            label: "Active"
+                        }, {
+                            name: "locdesc",
+                            label: "Location Description"
+                        }]
+                    };
+
+                    const polyInfos = {
+                        layer: polygonLayer,
+                        fieldConfig: [{
+                            name: "incidenttype",
+                            label: "Incident Type"
+                        }, {
+                            name: "activeincid",
+                            label: "Active"
+                        }, {
+                            name: "descrip",
+                            label: "Description"
+                        }]
+                    };
+
+                    const editor = new Editor({
+                        view: view,
+                        layerInfos: [{
+                                layer: pointLayer,
+                                fieldConfig: [pointInfos]
+                            },
+                            {
+                                layer: lineLayer,
+                                fieldConfig: [lineInfos]
+                            },
+                            {
+                                layer: polygonLayer,
+                                fieldConfig: [polyInfos]
+                            }
+                        ],
+                        // Set the snapping options for the Editor. By default, snapping is enabled. This can be toggled on/off using the CTRL key.
+                        snappingOptions: {
+                            enabled: true,
+                            selfEnabled: true,
+                            featureEnabled: true,
+                            featureSources: [{
+                                layer: pointLayer
+                            }, {
+                                layer: lineLayer
+                            }, {
+                                layer: polygonLayer
+                            }]
+                        }
+
+                    });
+                    // Add widget to top-right of the view
+                    view.ui.add(editor, "top-right");
+
+                });
+
+            });
+
+        });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <div id="editorDiv"></div>
+</body>
+
+</html>

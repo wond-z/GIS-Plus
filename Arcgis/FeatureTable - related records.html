@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>FeatureTable - related records</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.34/dijit/themes/claro/claro.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/3.34/esri/css/esri.css">
+    <script src="https://js.arcgis.com/3.34/"></script>
+    <style>
+        html, body, #map
+        {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script>
+        var map;
+        require([
+            "esri/map",
+            "esri/layers/ArcGISDynamicMapServiceLayer",
+            "esri/layers/ArcGISTiledMapServiceLayer",
+            "esri/layers/FeatureLayer",
+            "esri/dijit/FeatureTable",
+            "dojo/on",
+            "dojo/dom",
+            "esri/tasks/query",
+            "esri/symbols/SimpleFillSymbol",
+            "esri/symbols/SimpleLineSymbol",
+            "esri/renderers/SimpleRenderer",
+            "esri/geometry/Extent"
+        ], function (
+            Map,ArcGISDynamicMapServiceLayer,ArcGISTiledMapServiceLayer,FeatureLayer,FeatureTable,on,dom,Query,SimpleFillSymbol,SimpleLineSymbol,SimpleRenderer,Extent
+        ) {
+            map = new Map("map",{
+                logo: false,
+                slider: false,
+                zoom: 0
+            });
+            var layer = new ArcGISTiledMapServiceLayer("http://localhost:6080/arcgis/rest/services/TestServer/mytile2/MapServer/");
+            map.addLayer(layer);
+
+            // 要素图层
+            var myFeatureLayer = new FeatureLayer("http://localhost:6080/arcgis/rest/services/TestServer/mytile2/MapServer/1",{
+                mode: FeatureLayer.MODE_ONDEMAND,
+                outFields: ["*"],
+                visible: true,
+                id : "fLayer",
+                opacity: 0.7
+            });
+            on(dom.byId("selectBtn"),"click",function (e) {
+                map.removeLayer(myFeatureLayer);
+                var selectText = dom.byId("selectText").value;
+                var sql = "name like '%" + selectText + "%'";
+                myFeatureLayer.setDefinitionExpression(sql);
+                var selectionSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID,
+                    new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID,
+                        new dojo.Color("blue"), 1),
+                    new dojo.Color("blue"));
+
+                //设置缩放到查询
+                var selExtent = new Extent();
+                var query = new Query();
+                query.where='1=1';
+                query.returnGeometry = true;
+                //遍历每一个前面筛选出来的每一个Feature获取Extent来联合得到最大的范围,进行缩放
+                myFeatureLayer.queryFeatures(query, function (featureSet) {
+                    var features = featureSet.features;
+                    selExtent = features[0].geometry.getExtent();
+                    for (var i = 0, len = features.length; i < len; i++) {
+                        selExtent = selExtent.union(features[i].geometry.getExtent());
+                    }
+                    map.setExtent(selExtent);
+                });
+                // 设置查询到的要素的渲染
+                var render = new SimpleRenderer(selectionSymbol);
+                myFeatureLayer.setRenderer(render);
+                map.addLayer(myFeatureLayer);
+                //点击FeatureLayer设置infowindow()气泡弹框
+                myFeatureLayer.on("click",function (e) {
+                    var graphicAttr = e.graphic.attributes;
+                    var content = graphicAttr.name;
+                    // 设置infowindow
+                    map.infoWindow.setTitle("建筑");
+                    map.infoWindow.setContent("name:"+content+"<br>");
+                    map.infoWindow.show(e.screenPoint, map.getInfoWindowAnchor(e.screenPoint));
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<div id="map">
+    <input type="text" id="selectText" />
+    <input type="button" id="selectBtn" value="查询" />
+</div>
+</body>
+</html>

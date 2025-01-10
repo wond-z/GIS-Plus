@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>北京热力demo</title>
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: calc(100% - 200px);
+        }
+
+        .control {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+        }
+
+        .control button {
+            display: block;
+            margin: 10px auto;
+            width: 150px;
+            height: 50px;
+        }
+
+        .popup-link {
+            color: blue;
+            cursor: pointer;
+        }
+
+        .esri-popup__footer {
+            display: none !important;
+        }
+        .data-pos {
+            display: none;
+        }
+    </style>
+    <link rel="stylesheet" href="./javascript/4.25/esri/themes/light/main.css">
+    <script src="./javascript/4.25/init.js"></script>
+    <script type="text/javascript" src="./jquery.min.js"></script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <script>
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Basemap",
+            "esri/geometry/SpatialReference",
+            "esri/layers/WebTileLayer",
+            "esri/Graphic",
+            "esri/layers/GraphicsLayer",
+            "esri/geometry/Point",
+            "esri/symbols/TextSymbol",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/PictureMarkerSymbol",
+            "esri/symbols/Font",
+        ], function (esriConfig, Map, MapView, Basemap, SpatialReference, WebTileLayer, Graphic, GraphicsLayer, Point, TextSymbol, SimpleMarkerSymbol, PictureMarkerSymbol, Font) {
+            esriConfig.apiKey = "YOUR_API_KEY";
+
+            // 定义地图
+            window.map = new Map({
+                // 离线地图
+                basemap: new Basemap({
+                    baseLayers: [
+                        new WebTileLayer({
+                            // 必须为服务器路径
+                            urlTemplate: window.location.origin + "/roadmap/{level}/{col}/{row}.png",
+                            subDomains: ["a", "b", "c", "d"]
+                        })
+                    ]
+                })
+            });
+            // 创建mapView
+            window.mapView = new MapView({
+                map: map,
+                zoom: 12, // 初始缩放层级
+                center: [116.403406, 39.913164], // 定义地图初始视图中心点
+                constraints: {
+                    snapToZoom: false
+                },
+                container: viewDiv // 地图展示容器
+            });
+            // ============ 以上内容将地图正常接入，下面将新建一个图层用于绘制标记点及点击标记点展示气泡
+            //创建图层
+            window.graphicLayer = new GraphicsLayer({
+                visible: true // 图层默认设置隐藏，当点击 放大地图 按钮后显示图层
+            });
+            //把图层添加到地图上
+            map.layers.add(graphicLayer);
+
+
+            // 定义坐标点
+            const points = [
+                {
+                    x: 116.306821,
+                    y: 39.965387,
+                    group: '北京',
+                    name: '海淀区'
+                },
+                {
+                    x: 116.368337,
+                    y: 39.918477,
+                    group: '北京',
+                    name: '西城区'
+                }
+            ];
+
+            function addMarker(pointInfo) {
+                let itempoint = new Point(pointInfo.x, pointInfo.y, map.spatialReference);
+                // 定义点标注
+                var markerSymbol = new SimpleMarkerSymbol({
+                    style: "circle",
+                    size: 12,
+                    color: [255, 0, 0, 255],
+                    outline: {
+                        color: [0, 0, 0, 255],
+                        width: 1,
+                        type: "simple-line",
+                        style: "solid"
+                    }
+                });
+
+                // 圆点标注属性
+                var pointAttr = {
+                    type: 'point',
+                    group: pointInfo.group,
+                    name: pointInfo.name,
+                    info: '' // 用于占位，具体变量数据刷新在定时器中完成
+                };
+
+                // 弹窗
+                const popupTmp = {
+                    "title": pointInfo.name,
+                    // "content": `test content<a href="https://www.baidu.com" target="_blank">点击跳转页面</a>`, // 在弹窗中添加页面跳转功能
+                    // "content": populationChange
+                    "content": `<div>
+                            <ul>
+                                <li class="data-pos">[${pointInfo.x}, ${pointInfo.y}]</li>
+                                <li>位置：${pointInfo.x}, ${pointInfo.y}</li>
+                                <li>描述：xxx</li>
+                            </ul>
+                            <span class="popup-link">点击进入</span>
+                        </div>` // 给弹出内容添加指定类名
+                }
+                var graphic = new Graphic(itempoint, markerSymbol, pointAttr, popupTmp);
+
+                // 定义文字标注
+                var textSymbol = new TextSymbol({
+                    text: pointInfo.name,
+                    color: [0, 0, 0, 255],
+                    haloColor: [255, 255, 255, 255],
+                    haloSize: 2,
+                    angle: 0,
+                    xoffset: 0,
+                    yoffset: -18,
+                    font: new Font({size: 9})
+                });
+
+                // 文字标注属性
+                var textAttr = {
+                    type: 'text',
+                    group: pointInfo.group,
+                    name: pointInfo.name,
+                    info: ''
+                };
+
+                var textGraphic = new Graphic(itempoint, textSymbol, textAttr, popupTmp);
+
+                // 添加图形到图层
+                graphicLayer.add(graphic);
+                graphicLayer.add(textGraphic);
+            }
+
+            points.forEach((item) => {
+                addMarker(item);
+            });
+
+            $('.esri-ui-inner-container').on('click', '.popup-link', function(e) {
+                console.log(e);
+                // 获取点击点坐标
+                const pos = JSON.parse($($('.data-pos')[0]).text());
+                // 关闭弹窗
+                $('.esri-icon-close').click();
+                console.log(pos)
+                mapView.goTo({
+                    center: pos,
+                    zoom: 16
+                }, {
+                duration: 2000, //视角跳转时长为2秒，
+                }).then(function () {
+                console.log("移动完成");
+                })
+            })
+        });
+    </script>
+</body>
+
+</html>

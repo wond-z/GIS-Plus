@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import{k as s,d as a,a as e,b as t,g as r,i as n,l as o,e as f,B as u,f as c,h as i,j as l,m as d,r as m,u as p,c as y,n as h,x as E,v as b,s as w,t as N,w as j,y as v,z as g,o as x,p as A,A as B,C,D as I,q as V,E as $,F as k,G as q,H as z,I as D,J as F}from"./BufferView.js";import{n as G}from"./InterleavedLayout.js";function H(s,a){return a.push(s.buffer),{buffer:s.buffer,layout:L(s.layout)}}function J(s){const a=function(s){const a=G();return a.stride=s.stride,a.fieldNames=s.fieldNames,s.fields.forEach((s=>{return a.fields.set(s[0],{...s[1],constructor:(e=s[1].constructor,_.get(e))});var e})),a}(s.layout);return a.createView(s.buffer)}function L(s){const a=new Array;return s.fields.forEach(((s,e)=>{const t={...s,constructor:T(s.constructor)};a.push([e,t])})),{stride:s.stride,fields:a,fieldNames:s.fieldNames}}const M=[s,a,e,t,r,n,o,f,u,c,i,l,d,m,p,y,h,E,b,w,N,j,v,g,x,A,B,C,I,V,$,k,q,z,D,F];function T(s){return`${s.ElementType}_${s.ElementCount}`}const _=new Map;M.forEach((s=>_.set(T(s),s)));export{H as p,J as u};

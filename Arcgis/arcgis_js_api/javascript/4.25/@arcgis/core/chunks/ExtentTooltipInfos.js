@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import{_ as t}from"./tslib.es6.js";import{z as e}from"./quantityUtils.js";import{property as o}from"../core/accessorSupport/decorators/property.js";import{subclass as s}from"../core/accessorSupport/decorators/subclass.js";import{S as r}from"./automaticLengthMeasurementUtils.js";let i=class extends r{constructor(t){super(t),this.type="extent-rotate",this.angle=0}};t([o()],i.prototype,"type",void 0),t([o()],i.prototype,"angle",void 0),i=t([s("esri.views.interactive.tooltip.ExtentRotateTooltipInfo")],i);let p=class extends r{constructor(t){super(t),this.type="extent-scale",this.xScale=0,this.yScale=0,this.xSize=e,this.ySize=e}};t([o()],p.prototype,"type",void 0),t([o()],p.prototype,"xScale",void 0),t([o()],p.prototype,"yScale",void 0),t([o()],p.prototype,"xSize",void 0),t([o()],p.prototype,"ySize",void 0),p=t([s("esri.views.interactive.tooltip.ExtentScaleTooltipInfo")],p);export{i as E,p as a};

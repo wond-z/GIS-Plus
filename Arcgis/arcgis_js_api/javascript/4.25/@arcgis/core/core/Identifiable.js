@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import{_ as s}from"../chunks/tslib.es6.js";import{subclass as e}from"./accessorSupport/decorators/subclass.js";import"../chunks/object.js";import"./lang.js";import"../chunks/maybe.js";import"../chunks/metadata.js";import"../chunks/utils.js";import"../chunks/handleUtils.js";import"../chunks/tracking.js";import"../chunks/Logger.js";import"../config.js";import"../chunks/string.js";import"../chunks/ensureType.js";import"./Error.js";let r=0;const t=t=>{let i=class extends t{constructor(...s){super(...s),Object.defineProperty(this,"uid",{writable:!1,configurable:!1,value:Date.now().toString(16)+"-object-"+r++})}};return i=s([e("esri.core.Identifiable")],i),i},i=t=>{let i=class extends t{constructor(...s){super(...s),Object.defineProperty(this,"uid",{writable:!1,configurable:!1,value:r++})}};return i=s([e("esri.core.NumericIdentifiable")],i),i};let o=class extends(t(class{})){};o=s([e("esri.core.Identifiable")],o);export{o as Identifiable,t as IdentifiableMixin,i as NumericIdentifiableMixin};

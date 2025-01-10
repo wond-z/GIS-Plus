@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import e from"../config.js";const t=new Map;async function r(r){const n=s(r);let o=t.get(n);if(o)return o;const a=new FontFace(r.family,`url('${e.fontsUrl}/woff2/${n}.woff2') format('woff2')`),i=document.fonts;return i.has(a)&&"loading"===a.status?a.loaded:(o=a.load(),t.set(n,o),i.add(a),o)}function n(e){if(!e)return"arial-unicode-ms";const t=e.toLowerCase().split(" ").join("-");switch(t){case"serif":return"noto-serif";case"sans-serif":return"arial-unicode-ms";case"monospace":return"ubuntu-mono";case"fantasy":return"cabin-sketch";case"cursive":return"redressed";default:return t}}function s(e){const t=function(e){if(!e.weight)return"";switch(e.weight.toLowerCase()){case"bold":case"bolder":return"-bold"}return""}(e)+function(e){if(!e.style)return"";switch(e.style.toLowerCase()){case"italic":case"oblique":return"-italic"}return""}(e);return n(e.family)+(t.length>0?t:"-regular")}export{s as a,n as g,r as l};

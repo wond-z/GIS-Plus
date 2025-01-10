@@ -1,0 +1,316 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Intro to MapView - Create a 2D map | Sample | ArcGIS API for JavaScript 4.19</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.19/"></script>
+
+  <script>
+    window.pointGraphic = [];
+    require([
+      "esri/Map",
+      "dojo/_base/xhr",
+      "esri/views/MapView",
+      "esri/widgets/Home",
+      "esri/layers/TileLayer",
+      "esri/layers/MapImageLayer",
+      "esri/layers/FeatureLayer",
+      "esri/layers/support/Sublayer",
+      "esri/layers/support/LabelClass",
+      "esri/symbols/TextSymbol",
+      "esri/geometry/Extent",
+      "esri/Graphic",
+      // "esri/geometry/Point",
+      // "esri/symbols/MarkerSymbol",
+      "esri/Color",
+      "esri/geometry/Point",
+      "esri/geometry/SpatialReference",
+      "dojo/domReady!",
+    ], (Map,xhr, MapView, Home, TileLayer,MapImageLayer,FeatureLayer,Sublayer,LabelClass,TextSymbol,Extent,Graphic,Color,Point,SpatialReference) => {
+      const map = new Map({
+        basemap: "topo-vector"
+      });
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        zoom: 12,
+        center: [10, 10] // longitude, latitude
+      });
+      view.on('click', e => {
+        debugger
+        console.log(e)
+        // map.centerAt(e.mapPoint);
+        view.goTo({
+          center: e.mapPoint,
+          zoom: 12,
+        }, {
+          duration: 2000 //视角跳转时长为2秒
+        })
+        //     var lat = Math.round(e.mapPoint.getLatitude() * 1000) / 1000;
+        // var lon = Math.round(e.mapPoint.getLongitude() * 1000) / 1000;
+        // console.log(lat+","+lon);
+        // var mapPointx = Math.round(e.mapPoint.x);
+        // var mapPointy = Math.round(e.mapPoint.y);
+        // var point11 =  new Point(mapPointx,mapPointy, new SpatialReference(3857))
+        // var lat_X = point11.getLatitude();//经纬度X
+ 	      // var lat_Y = point11.getLongitude();//经纬度Y
+        // let point = {
+        //   type: "point",  // autocasts as new Point()
+        //   longitude: mapPointx,
+        //   latitude: mapPointy,
+        // };
+
+        // // Create a symbol for drawing the point
+        // let markerSymbol = {
+        //   type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+        //   color: [0, 0, 0]
+        // };
+        // var colorsss = new Color([255, 255, 255])
+        // // Create a graphic and add the geometry and symbol to it
+        // let pointGraphic = new Graphic({
+        //   geometry: point,
+        //   symbol: markerSymbol
+        // });
+        // // const pointGraphic = new Graphic({
+        // //   geometry: {
+        // //     type: 'point',
+        // //     // 点的位置
+        // //     longitude: lat_X,
+        // //     latitude: lat_Y,
+        // //     z:0
+        // //   },
+        // //   symbol: {
+        // //     // 类型有 图片标记 和 点
+        // //     type: 'picture-marker',
+        // //     // 图片地址，可以网络路径或本地路径（PS：base64亦可）
+        // //     url:'http://127.0.0.1:11001/img?imgPath=/kaa261b35-32ff-4183-8b31-0284b4add67d/1.0.0.1/QQ图片20210510133139.gif',
+        // //     // 图片的大小
+            // // width: '32px',
+            // // height: '48px'
+        // //   },
+        // //   attributes: {
+        // //     Foo: 'Hello world!'
+        // //   }
+        // // })
+        // // console.log(pointGraphic);
+        // // window.pointGraphic.push(pointGraphic);
+        // // // pointGraphic
+        // view.graphics.add(pointGraphic)
+        view.hitTest(e)
+          .then(res => {
+            console.log(res);
+            if (res.results.length!==0) {
+              alert(JSON.stringify(res.results[0].graphic.attributes));
+            }
+          })
+
+      })
+    });
+
+
+
+
+
+
+    
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
+
+<!-- 
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to layers | Sample | ArcGIS API for JavaScript 4.19</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.19/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #layerToggle {
+        top: 20px;
+        right: 20px;
+        position: absolute;
+        z-index: 99;
+        background-color: white;
+        border-radius: 8px;
+        padding: 10px;
+        opacity: 0.75;
+      }
+    </style>
+
+    <script>
+      require([
+      "esri/Map",
+      "dojo/_base/xhr",
+      "esri/views/SceneView",
+      "esri/widgets/Home",
+      "esri/layers/TileLayer",
+      "esri/layers/MapImageLayer",
+      "esri/layers/FeatureLayer",
+      "esri/layers/support/Sublayer",
+      "esri/layers/support/LabelClass",
+      "esri/symbols/TextSymbol",
+      "esri/geometry/Extent",
+      "esri/Graphic",
+      "esri/geometry/Polyline",
+      "esri/symbols/MarkerSymbol",
+      "dojo/domReady!",
+    ], (Map,xhr, SceneView, Home, TileLayer,MapImageLayer,FeatureLayer,Sublayer,LabelClass,TextSymbol,Extent,Graphic,Point) => {
+        /*****************************************************************
+         * Create two TileLayer instances. One pointing to a
+         * cached map service depicting U.S. male population and the other
+         * pointing to a layer of roads and highways.
+         *****************************************************************/
+        const transportationLayer = new TileLayer({
+          url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer",
+          // This property can be used to uniquely identify the layer
+          id: "streets",
+          visible: false
+        });
+
+        const housingLayer = new TileLayer({
+          url:
+            "https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/New_York_Housing_Density/MapServer",
+          id: "ny-housing",
+          opacity: 0.9
+        });
+
+        /*****************************************************************
+         * Layers may be added to the map in the map's constructor
+         *****************************************************************/
+        const map = new Map({
+          basemap: "oceans",
+          layers: [housingLayer]
+        });
+
+        /*****************************************************************
+         * Or they may be added to the map using map.add()
+         *****************************************************************/
+        map.add(transportationLayer);
+
+        const view = new SceneView({
+          container: "viewDiv",
+          zoom: 12,
+          map: map
+        });
+
+        /*****************************************************************
+         * The map handles the layers' data while the view and layer views
+         * take care of renderering the layers
+         *****************************************************************/
+        view.on("layerview-create", (event) => {
+          if (event.layer.id === "ny-housing") {
+            // Explore the properties of the population layer's layer view here
+            console.log("LayerView for male population created!", event.layerView);
+          }
+          if (event.layer.id === "streets") {
+            // Explore the properties of the transportation layer's layer view here
+            // Explore the properties of the transportation layer's layer view here
+            console.log("LayerView for streets created!", event.layerView);
+          }
+        });
+
+        /*****************************************************************
+         * Layers are promises that resolve when loaded, or when all their
+         * properties may be accessed. Once the population layer has loaded,
+         * the view will animate to it's initial extent.
+         *****************************************************************/
+        view.when(() => {
+          housingLayer.when(() => {
+            view.goTo(housingLayer.fullExtent)
+            .catch((error) => {
+              console.error(error);
+            });
+          });
+        });
+
+        const streetsLayerToggle = document.getElementById("streetsLayer");
+
+        /*****************************************************************
+         * The visible property on the layer can be used to toggle the
+         * layer's visibility in the view. When the visibility is turned off
+         * the layer is still part of the map, which means you can access
+         * its properties and perform analysis even though it isn't visible.
+         *******************************************************************/
+        streetsLayerToggle.addEventListener("change", () => {
+          transportationLayer.visible = streetsLayerToggle.checked;
+        });
+        view.on('click', e => {
+        console.log(e)
+        //     var lat = Math.round(e.mapPoint.getLatitude() * 1000) / 1000;
+        // var lon = Math.round(e.mapPoint.getLongitude() * 1000) / 1000;
+        // console.log(lat+","+lon);
+        var mapPointx = e.mapPoint.longitude;
+        var mapPointy = e.mapPoint.latitude;
+        let polyline = {
+          type: 'polyline',
+          // 二维数组，每个元素是一个地点的经纬度，点越多路线越精准
+          paths: [
+            [e.mapPoint.x, e.mapPoint.y],
+            [e.mapPoint.x +10, e.mapPoint.y +10],
+            [e.mapPoint.x -20, e.mapPoint.y -20],
+            [e.mapPoint.x +30, e.mapPoint.y +30]
+          ]
+        }
+
+        // 路径的属性定制
+        let lineSymbol = {
+          type: 'simple-line', // 类型
+          color: '#1e80ff', // 颜色 rgb or rgba [255, 0, 0, 0.5] or 16进制
+          width: 3 // 宽度 px
+        }
+
+
+        // Create a graphic and add the geometry and symbol to it
+        let pointGraphic = new Graphic({
+          geometry: polyline,
+          symbol: lineSymbol
+        });
+
+
+        view.graphics.add(pointGraphic)
+        view.hitTest(e)
+          .then(res => {
+            console.log(res);
+          })
+
+      })
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <span id="layerToggle" class="esri-widget"> <input type="checkbox" id="streetsLayer" /> Transportation </span>
+  </body>
+</html> -->

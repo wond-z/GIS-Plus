@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+import{_ as e}from"./tslib.es6.js";import"./Logger.js";import"./ensureType.js";import"../core/lang.js";import"../core/Error.js";import"./object.js";import{subclass as r}from"../core/accessorSupport/decorators/subclass.js";import{W as s}from"./enums4.js";import{a as t}from"./BaseGraphicContainer.js";import{j as i}from"./enums3.js";let o=class extends t{doRender(e){e.drawPhase===s.HIGHLIGHT&&super.doRender(e)}renderChildren(e){if(this.attributeView.update(),!this.children.some((e=>e.hasData)))return;this.attributeView.bindTextures(e.context),super.renderChildren(e);const{painter:r}=e,s=r.effects.highlight;s.bind(e),e.context.setColorMask(!0,!0,!0,!0),e.context.clear(i.COLOR_BUFFER_BIT),this._renderChildren(e,s.defines.concat(["highlightAll"])),s.draw(e),s.unbind()}};o=e([r("esri.views.2d.layers.support.HighlightGraphicContainer")],o);const n=o;export{n as H};

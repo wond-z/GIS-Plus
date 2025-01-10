@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.25/esri/copyright.txt for details.
+*/
+function n(n){return 32+n.length}function r(n){return 16}function t(r){if(!r)return 0;let t=s;for(const e in r)if(r.hasOwnProperty(e)){const o=r[e];switch(typeof o){case"string":t+=n(o);break;case"number":t+=16;break;case"boolean":t+=4}}return t}function e(n){if(!n)return 0;if(Array.isArray(n))return function(n){const r=n.length;if(0===r||"number"==typeof n[0])return 32+8*r;let t=a;for(let e=0;e<r;e++)t+=o(n[e]);return t}(n);let r=s;for(const t in n)n.hasOwnProperty(t)&&(r+=o(n[t]));return r}function o(r){switch(typeof r){case"object":return e(r);case"string":return n(r);case"number":return 16;case"boolean":return 4;default:return 8}}function u(n,r){return a+n.length*r}const s=32,a=32;var c;!function(n){n[n.KILOBYTES=1024]="KILOBYTES",n[n.MEGABYTES=1048576]="MEGABYTES",n[n.GIGABYTES=1073741824]="GIGABYTES"}(c||(c={}));export{c as B,e as a,u as b,n as c,r as d,t as e};
