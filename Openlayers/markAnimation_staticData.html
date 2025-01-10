@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta chareset="utf-8">
+    <title>OpenLayers 3 example</title>
+    <link rel="stylesheet" href="css/ol.css">
+    <script src="js/ol.js" type="text/javascript"></script>
+    <style>
+        #map { height:400px; width:100%; }
+    </style>
+</head>
+<body>
+    <h1>My Map</h1>
+    <input id="speed" type="range" min="10" max="999" step="10" value="60">
+    <button id="start-animation">Start Animation</button>
+    <div id="map"></div>
+    <script type="text/javascript">
+        // 定义路径数据,这是官方提供的数据,geometry中的数据是经过点坐标连线后转换得到的,
+        // 若需要根据两点坐标绘制路径,可参考:https://blog.csdn.net/yc15128221056/article/details/84585552
+        const routeData = {"routes":[{"geometry": "hldhx@lnau`BCG_EaC??cFjAwDjF??uBlKMd@}@z@??aC^yk@z_@se@b[wFdE??wFfE}NfIoGxB_I\\gG}@eHoCyTmPqGaBaHOoD\\??yVrGotA|N??o[N_STiwAtEmHGeHcAkiA}^aMyBiHOkFNoI`CcVvM??gG^gF_@iJwC??eCcA]OoL}DwFyCaCgCcCwDcGwHsSoX??wI_EkUFmq@hBiOqBgTwS??iYse@gYq\\cp@ce@{vA}s@csJqaE}{@iRaqE{lBeRoIwd@_T{]_Ngn@{PmhEwaA{SeF_u@kQuyAw]wQeEgtAsZ}LiCarAkVwI}D??_}RcjEinPspDwSqCgs@sPua@_OkXaMeT_Nwk@ob@gV}TiYs[uTwXoNmT{Uyb@wNg]{Nqa@oDgNeJu_@_G}YsFw]kDuZyDmm@i_@uyIJe~@jCg|@nGiv@zUi_BfNqaAvIow@dEed@dCcf@r@qz@Egs@{Acu@mCum@yIey@gGig@cK_m@aSku@qRil@we@{mAeTej@}Tkz@cLgr@aHko@qOmcEaJw~C{w@kai@qBchBq@kmBS{kDnBscBnFu_Dbc@_~QHeU`IuyDrC_}@bByp@fCyoA?qMbD}{AIkeAgBk_A_A{UsDke@gFej@qH{o@qGgb@qH{`@mMgm@uQus@kL{_@yOmd@ymBgwE}x@ouBwtA__DuhEgaKuWct@gp@cnBii@mlBa_@}|Asj@qrCg^eaC}L{dAaJ_aAiOyjByH{nAuYu`GsAwXyn@ywMyOyqD{_@cfIcDe}@y@aeBJmwA`CkiAbFkhBlTgdDdPyiB`W}xDnSa}DbJyhCrXitAhT}x@bE}Z_@qW_Kwv@qKaaAiBgXvIm}A~JovAxCqW~WanB`XewBbK{_A`K}fBvAmi@xBycBeCauBoF}}@qJioAww@gjHaPopA_NurAyJku@uGmi@cDs[eRaiBkQstAsQkcByNmaCsK_uBcJgbEw@gkB_@ypEqDoqSm@eZcDwjBoGw`BoMegBaU_`Ce_@_uBqb@ytBwkFqiT_fAqfEwe@mfCka@_eC_UmlB}MmaBeWkkDeHwqAoX}~DcBsZmLcxBqOwqE_DkyAuJmrJ\\o~CfIewG|YibQxBssB?es@qGciA}RorAoVajA_nAodD{[y`AgPqp@mKwr@ms@umEaW{dAmb@umAw|@ojBwzDaaJsmBwbEgdCsrFqhAihDquAi`Fux@}_Dui@_eB_u@guCuyAuiHukA_lKszAu|OmaA{wKm}@clHs_A_rEahCssKo\\sgBsSglAqk@yvDcS_wAyTwpBmPc|BwZknFoFscB_GsaDiZmyMyLgtHgQonHqT{hKaPg}Dqq@m~Hym@c`EuiBudIabB{hF{pWifx@snAw`GkFyVqf@y~BkoAi}Lel@wtc@}`@oaXi_C}pZsi@eqGsSuqJ|Lqeb@e]kgPcaAu}SkDwzGhn@gjYh\\qlNZovJieBqja@ed@siO{[ol\\kCmjMe\\isHorCmec@uLebB}EqiBaCg}@m@qwHrT_vFps@kkI`uAszIrpHuzYxx@e{Crw@kpDhN{wBtQarDy@knFgP_yCu\\wyCwyA{kHo~@omEoYmoDaEcPiuAosDagD}rO{{AsyEihCayFilLaiUqm@_bAumFo}DgqA_uByi@swC~AkzDlhA}xEvcBa}Cxk@ql@`rAo|@~bBq{@``Bye@djDww@z_C_cAtn@ye@nfC_eC|gGahH~s@w}@``Fi~FpnAooC|u@wlEaEedRlYkrPvKerBfYs}Arg@m}AtrCkzElw@gjBbh@woBhR{gCwGkgCc[wtCuOapAcFoh@uBy[yBgr@c@iq@o@wvEv@sp@`FajBfCaq@fIipAdy@ewJlUc`ExGuaBdEmbBpBssArAuqBBg}@s@g{AkB{bBif@_bYmC}r@kDgm@sPq_BuJ_s@{X_{AsK_d@eM{d@wVgx@oWcu@??aDmOkNia@wFoSmDyMyCkPiBePwAob@XcQ|@oNdCoSfFwXhEmOnLi\\lbAulB`X_d@|k@au@bc@oc@bqC}{BhwDgcD`l@ed@??bL{G|a@eTje@oS~]cLr~Bgh@|b@}Jv}EieAlv@sPluD{z@nzA_]`|KchCtd@sPvb@wSb{@ko@f`RooQ~e[upZbuIolI|gFafFzu@iq@nMmJ|OeJn^{Qjh@yQhc@uJ~j@iGdd@kAp~BkBxO{@|QsAfYgEtYiGd]}Jpd@wRhVoNzNeK`j@ce@vgK}cJnSoSzQkVvUm^rSgc@`Uql@xIq\\vIgg@~kDyq[nIir@jNoq@xNwc@fYik@tk@su@neB}uBhqEesFjoGeyHtCoD|D}Ed|@ctAbIuOzqB_}D~NgY`\\um@v[gm@v{Cw`G`w@o{AdjAwzBh{C}`Gpp@ypAxn@}mAfz@{bBbNia@??jIab@`CuOlC}YnAcV`@_^m@aeB}@yk@YuTuBg^uCkZiGk\\yGeY}Lu_@oOsZiTe[uWi[sl@mo@soAauAsrBgzBqgAglAyd@ig@asAcyAklA}qAwHkGi{@s~@goAmsAyDeEirB_{B}IsJuEeFymAssAkdAmhAyTcVkFeEoKiH}l@kp@wg@sj@ku@ey@uh@kj@}EsFmG}Jk^_r@_f@m~@ym@yjA??a@cFd@kBrCgDbAUnAcBhAyAdk@et@??kF}D??OL"}]};
+        // 初识化地图
+        var map = new ol.Map({
+            target: 'map',
+            view: new ol.View({
+                center: [-5639523.95, -3501274.52],
+                zoom: 10,                                                                                                                                                               
+                minZoom: 2,
+                maxZoom: 19,
+            }),
+            layers: [new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: 'http://webst0{1-4}.is.autonavi.com/appmaptile?style=7&x={x}&y={y}&z={z}',
+                    tileSize: 512
+                }),
+            })],
+        });
+
+        // 定义路径(折线)
+        const polyline = routeData.routes[0].geometry;
+
+        // 定义路线
+        const route = new ol.format.Polyline({
+            factor: 1e6,
+        }).readGeometry(polyline, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3857',
+        });
+        console.log(route);
+
+        // 定义路径元素
+        const routeFeature = new ol.Feature({
+            type: 'route',
+            geometry: route,
+        });
+
+        // 定义开始点标记
+        const startMarker = new ol.Feature({
+            type: 'icon',
+            geometry: new ol.geom.Point(route.getFirstCoordinate()),
+        });
+
+        // 定义结束点标记
+        const endMarker = new ol.Feature({
+            type: 'icon',
+            geometry: new ol.geom.Point(route.getLastCoordinate()),
+        });
+
+        // 定义一个点，作为后面被用来移动的标记
+        const position = startMarker.getGeometry().clone();
+        const geoMarker = new ol.Feature({
+            type: 'geoMarker',
+            geometry: position,
+        });
+
+        // 定义地图中使用到的图素的样式
+        const styles = {
+            // 路径样式
+            'route': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    width: 6,
+                    color: [237, 212, 0, 0.8],
+                }),
+            }),
+            // 图标(起始点)样式
+            'icon': new ol.style.Style({
+                image: new ol.style.Icon({
+                    anchor: [0.5, 1],
+                    src: 'img/icon.png',
+                }),
+            }),
+            // 移动点样式
+            'geoMarker': new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 7,
+                    fill: new ol.style.Fill({ color: 'black' }),
+                    stroke: new ol.style.Stroke({
+                        color: 'white',
+                        width: 2,
+                    }),
+                }),
+            }),
+        };
+
+        // 定义数据图层，将前面定义的所有图素和标注添加到数据层
+        const vectorLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [routeFeature, geoMarker, startMarker, endMarker],
+            }),
+            style: function (feature) {
+                return styles[feature.get('type')];
+            },
+        });
+
+        // 将数据图层添加到地图中
+        map.addLayer(vectorLayer);
+
+
+        /**
+         * 说明:
+         * 至此步，地图中所要用到的所有内容均已具备
+         * 下一步将为要移动点做动画效果
+         */
+
+        // 获取速度值,若速度恒定可在moveFeature方法中给speed变量直接给固定数值
+        const speedInput = document.getElementById('speed');
+        // 定义按钮对象
+        const startButton = document.getElementById('start-animation');
+
+        // 记录动画执行状态
+        let animating = false;
+        // 定义距离
+        let distance = 0;
+        // 
+        let lastTime;
+
+        // 移动点
+        function moveFeature(event) {
+            const speed = Number(speedInput.value);
+            const time = event.frameState.time;
+            const elapsedTime = time - lastTime;
+            distance = (distance + (speed * elapsedTime) / 1e6) % 2;
+            lastTime = time;
+
+            // 点的当前位置
+            const currentCoordinate = route.getCoordinateAt(
+                distance > 1 ? 2 - distance : distance
+            );
+            position.setCoordinates(currentCoordinate);
+            const vectorContext = ol.render.getVectorContext(event);
+            vectorContext.setStyle(styles.geoMarker);
+            vectorContext.drawGeometry(position);
+            // 继续渲染后动画
+            map.render();
+        }
+
+        // 开始动画
+        function startAnimation() {
+            animating = true;
+            lastTime = Date.now();
+            startButton.textContent = 'Stop Animation';
+            // Vector的on事件可参考API文档中Fires中的详细描述
+            vectorLayer.on('postrender', moveFeature);
+            // hide geoMarker and trigger map render through change event
+            geoMarker.setGeometry(null);
+        }
+
+        // 结束动画
+        function stopAnimation() {
+            animating = false;
+            startButton.textContent = 'Start Animation';
+
+            // Keep marker at current animation position
+            geoMarker.setGeometry(position);
+            vectorLayer.un('postrender', moveFeature);
+        }
+
+        // 动画开始和结束切换
+        startButton.addEventListener('click', function () {
+            if (animating) {
+                stopAnimation();
+            } else {
+                startAnimation();
+            }
+        });
+    </script>
+</body>
+</html>

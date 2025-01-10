@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="css/ol.css">
+    <script src="js/ol.js"></script>
+    <!-- <script src="lib/bootstrap/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.css"> -->
+    <style>
+        #marker {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #088;
+            border-radius: 10px;
+            background-color: #0FF;
+            opacity: 0.5;
+        }
+        #vienna {
+            text-decoration: none;
+            color: white;
+            font-size: 11pt;
+            font-weight: bold;
+            text-shadow: black 0.1em 0.1em 0.2em;
+        }
+        .popover{
+            max-width:300px;
+            min-width: 100px;
+
+        }
+        .popover-content {
+            min-width: 700px;
+            max-width: 1000px;
+
+        }
+        #map-switch{
+            position:absolute;
+            top: 50px;
+            right: 50px;
+            z-index: 10;
+            padding: 10px;
+            background-color: #ddccac;
+            /*阴影*/
+            box-shadow: 5px 5px 3px #888888;
+            /*边框*/
+            border:1px solid #9d9d9d;
+            /*圆角*/
+            border-radius:10px;
+        }
+        #map-measure{
+            position: absolute;
+            z-index: 10;
+            left: 100px;
+            top:30px;
+        }
+        /*测量样式*/
+        .tooltip {
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            color: white;
+            padding: 4px 8px;
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+        .tooltip-measure {
+            opacity: 1;
+            font-weight: bold;
+        }
+        .tooltip-static {
+            background-color: #ffcc33;
+            color: black;
+            border: 1px solid white;
+        }
+        .tooltip-measure:before,
+        .tooltip-static:before {
+            border-top: 6px solid rgba(0, 0, 0, 0.5);
+            border-right: 6px solid transparent;
+            border-left: 6px solid transparent;
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            margin-left: -7px;
+            left: 50%;
+        }
+        .tooltip-static:before {
+            border-top-color: #ffcc33;
+        }
+    </style>
+</head>
+<body>
+<div id="map" style="width: 100%">
+    <div style="display: none;">
+        <!-- Clickable label for Vienna -->
+        <a class="overlay" id="vienna" target="_blank" href="http://en.wikipedia.org/wiki/Vienna">Vienna</a>
+        <div id="marker" title="Marker"></div>
+        <!-- Popup -->
+        <div id="popup" title="基本信息"></div>
+    </div>
+</div>
+<script>
+    var webip="http://localhost:";
+    var gisip="http://localhost:";
+    var webport="8080/";
+    var gisport="8080/";
+    /*********************************************************地图初始化**********************************************************/
+    /*底图初始化*/
+    var format = 'image/png';
+    //view
+    /*    var view=new ol.View({
+     // 设置成都为地图中心
+     center: ol.proj.transform([508881,299705],"EPSG:3857","EPSG:3857"),
+     zoom: 18
+     });*/
+    var view=new ol.View({
+        // 设置成都为地图中心
+        center: ol.proj.transform([120,40],"EPSG:4326","EPSG:3857"),
+        zoom: 5
+    });
+    //var osm=new ol.layer.Tile({source: new ol.source.OSM()});
+
+
+    var tilePoint = new ol.layer.Tile({
+        //visible: false,
+        source: new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/whuxcy/wms',
+            params: {'FORMAT': format,
+                'VERSION': '1.1.1',
+                tiled: true,
+                "STYLES": '',
+                "LAYERS": 'whuxcy:point'
+                //"exceptions": 'application/vnd.ogc.se_inimage',
+                //tilesOrigin: 8176078.237520734 + "," + 704818.0275364731
+            }
+        })
+    });
+    var tilePolyline = new ol.layer.Tile({
+        //visible: false,
+        source: new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/whuxcy/wms',
+            params: {'FORMAT': format,
+                'VERSION': '1.1.1',
+                tiled: true,
+                "STYLES": '',
+                "LAYERS": 'whuxcy:polyline'
+                //"exceptions": 'application/vnd.ogc.se_inimage',
+                //tilesOrigin: 8176078.237520734 + "," + 704818.0275364731
+            }
+        })
+    });
+    var tilePolygon = new ol.layer.Tile({
+        //visible: false,
+        source: new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/whuxcy/wms',
+            params: {'FORMAT': format,
+                'VERSION': '1.1.1',
+                tiled: true,
+                "STYLES": '',
+                "LAYERS": 'whuxcy:polygon'
+                //"exceptions": 'application/vnd.ogc.se_inimage',
+                //tilesOrigin: 8176078.237520734 + "," + 704818.0275364731
+            }
+        })
+    });
+    /*矢量图层初始化*/
+    var labelCoords_org=[120,40];
+    var labelCoords=ol.proj.transform(labelCoords_org,"EPSG:4326","EPSG:3857")
+    var line_org=[[120,40],[122,51]];
+    var geomPolyline= new ol.geom.LineString(line_org);
+    geomPolyline.transform("EPSG:4326","EPSG:3857");
+
+    var polygon_org=[[[120,40],[122,50],[111,45]]];
+    var geomPolygon=new ol.geom.Polygon(polygon_org);
+    geomPolygon.transform("EPSG:4326","EPSG:3857");
+
+    ////////////////////////////////////
+    var feature = new ol.Feature({
+        geometry: new ol.geom.Point(labelCoords),
+        name: 'My Polygon'
+    });
+
+    var featurepolyline = new ol.Feature({
+        geometry: geomPolyline,
+        name: 'My Polyline'
+    });
+    var featurepolygon= new ol.Feature({
+        geometry:geomPolygon
+    });
+    /////////////////////////////////////
+    var pointTypename="xcy:point";
+    var pointVectorSource = new ol.source.Vector({
+        features:[feature]
+    });
+    var fill = new ol.style.Fill({
+        color: '#dd942e'
+    });
+    var stroke = new ol.style.Stroke({
+        color: '#cc1000',
+        width: 1.25
+    });
+    var stylePoint = [
+        new ol.style.Style({
+            image: new ol.style.Circle({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255,0,255,0.4)'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#cc3540',
+                    width: 1.25
+                }),
+                radius: 5
+            }),
+            fill: fill,
+            stroke: stroke
+        })
+    ];
+    /*    var stylePoint = [
+     new ol.style.Style({
+     image:new ol.style.RegularShape({
+     fill: fill,
+     stroke: stroke,
+     points: 3,
+     radius: 10,
+     //rotation: Math.PI / 4,
+     angle: 0
+     })
+     })
+     ];*/
+    /*    var stylePoint = [
+     new ol.style.Style({
+     image:new ol.style.Icon(({
+     anchor: [0.5, 0],
+     anchorOrigin: 'bottom-left',
+     anchorXUnits: 'fraction',
+     anchorYUnits: 'pixels',
+     src: 'https://openlayers.org/en/v3.20.1/examples/data/icon.png',
+     scale: 0.45
+     }))
+     })
+     ];*/
+    var pointVectorLayer = new ol.layer.Vector({
+        title:"点",
+        source: pointVectorSource,
+        //style: styleFunction,
+        style:styleFunction,
+        renderMode:'image'
+    });
+    var polylineVectorSource = new ol.source.Vector({
+        features:[featurepolyline]
+    });
+    var stylePolyline = [
+        new ol.style.Style({
+            stroke: stroke
+        })
+    ];
+    var polylineVectorLayer = new ol.layer.Vector({
+        title:"线",
+        source: polylineVectorSource,
+        //style: styleFunction,
+        style:stylePolyline,
+        renderMode:'image'
+    });
+    var polygonVectorSource = new ol.source.Vector({
+        features:[featurepolygon]
+    });
+    var stylePolygon = [
+        new ol.style.Style({
+            image: new ol.style.Circle({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255,0,255,0.4)'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#cc3540',
+                    width: 1.25
+                }),
+                radius: 5
+            }),
+            fill: fill,
+            stroke: stroke
+        })
+    ];
+    var polygonVectorLayer = new ol.layer.Vector({
+        title:"面",
+        source: polygonVectorSource,
+        //style: styleFunction,
+        style:stylePolygon,
+        renderMode:'image'
+    });
+    setTimeout(showHeight,2000);
+    function showHeight() {
+        $.ajax({
+            type: "GET",
+            url: gisip+gisport+'geoserver/xcy/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName='+pointTypename+'&outputFormat=application%2Fjson&maxFeatures=200',
+            dataType:'json',
+            success: function(data){
+                var features=data.features;
+                for(var i=0;i<features.length;i++)
+                {
+                    var feature=features[i];
+                    var ft=new ol.Feature({
+                        geometry:new ol.geom.Point(feature.geometry.coordinates),
+                        //attr:feature
+                    });
+                    ft.attr=feature;
+                    pointVectorSource.addFeature(ft);
+                    var dom=$("<div/>").html(feature.properties.Text);
+                    var overlay= new ol.Overlay({
+                        element:dom[0],
+                        position:feature.geometry.coordinates,
+                        positioning:"top-left"
+                    });
+                    map.addOverlay(overlay);
+                }
+            }
+
+        });
+    }
+    function styleFunction(feature) {
+        var height=feature.get("name");
+
+        return new ol.style.Style({
+            image:new ol.style.Circle({
+                radius: 5,
+                fill: new ol.style.Fill({
+                    color: "#389BCD",
+                    opacity: 0.5
+                })
+            }),
+            text:new ol.style.Text({
+                text:height,
+                textAlign:"left",
+                offsetX:5,
+                fill: new ol.style.Fill({
+                    color: "#cd0500",
+                    opacity:1
+                }),
+                stroke:new ol.style.Stroke({
+                    color:"#dd942e",
+                    width:1
+                }),
+                font:" 14px SimHei"
+            })
+        });
+    }
+    // map
+    var map = new ol.Map({
+        layers: [
+            //tilePoint,
+            tilePolyline,
+            tilePolygon,
+            pointVectorLayer,
+            polylineVectorLayer,
+            polygonVectorLayer
+        ],
+        view:view,
+        target: 'map',
+        renderer:"canvas"
+    });
+
+    function  st(feature,isSelect) {
+
+        var _name="",
+            _color="rgba(255, 255, 255, 0.8)";
+        if(isSelect==true)
+        {
+            _name=feature.get("NAME");
+            _color= "rgba(255, 0, 0, 0.8)";
+        }
+        _name=map.getView().getZoom()>4?_name:"";
+        return  new ol.style.Style({
+            fill: new ol.style.Fill({ //矢量图层填充颜色，以及透明度
+                color:_color
+            }),
+            stroke: new ol.style.Stroke({ //边界样式
+                color: '#319FD3',
+                width: 1
+            }),
+            text: new ol.style.Text({ //文本样式
+                text:_name,
+                font: '12px Calibri,sans-serif',
+                fill: new ol.style.Fill({
+                    color: '#000'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: 'red',
+                    width: 3
+                }),
+                //textAlign:"left",
+                offsetX:"0"
+            })
+        });
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta chareset="utf-8">
+    <title>OpenLayers 3 example</title>
+    <link rel="stylesheet" href="css/ol.css">
+    <script src="js/ol.js" type="text/javascript"></script>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>My Map</h1>
+    <div id="map"></div>
+    <script type="text/javascript">
+        // 定义坐标点
+        var coordinates = [
+            [105.57147286, 28.87404486],
+            [105.57241163, 28.87339190],
+            [105.57290252, 28.87361188],
+            [105.57168207, 28.87447703],
+            [105.57069502, 28.87515817],
+            [105.57204149, 28.87473070],
+            [105.57324848, 28.87388514]
+        ];
+
+        // 坐标转换，循环遍历将经纬度转到"EPSG:4326"投影坐标系下
+        var coordinatesPolygon = new Array();
+        for (var i = 0; i < coordinates.length; i++) {
+            var pointTransform = ol.proj.transform([coordinates[i][0], coordinates[i][1]], 'EPSG:4326', 'EPSG:3857');
+            coordinatesPolygon.push(pointTransform);
+        }
+
+
+        var tileLayer = new ol.layer.Tile({
+            source: new ol.source.OSM()
+        });
+
+        // map.addLayer(tileLayer);
+
+        var source = new ol.source.Vector();
+
+        var feature = new ol.Feature({  
+            geometry:new ol.geom.LineString(coordinatesPolygon)
+        });
+
+        source.addFeature(feature);
+
+        var myStyle = function (feature) {
+            var geometry = feature.getGeometry();
+            var styles = [
+                new ol.style.Style({
+                    fill: new ol.style.Fill({
+                        color: '#0044CC'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        lineDash: [1, 2, 3, 4, 5, 6],
+                        width: 3,
+                        color: [255, 0, 0, 1]
+                    })
+                })
+            ];
+
+            // 在线的中间位置添加箭头方向
+            geometry.forEachSegment(function (start, end) {
+                var arrowLonLat = [(end[0] + start[0]) / 2, (end[1] + start[1]) / 2];
+                var dx = end[0] - start[0];
+                var dy = end[1] - start[1];
+                var rotation = Math.atan2(dy, dx);
+                styles.push(new ol.style.Style({
+                    geometry: new ol.geom.Point(arrowLonLat),
+                    image: new ol.style.Icon({
+                        src: 'img/arrow.png',
+                        anchor: [0.75, 0.5],
+                        rotateWithView: true,
+                        rotation: -rotation
+                    })
+                }));
+            });
+            return styles;
+        };
+
+        var vector = new ol.layer.Vector({
+    		source: source,
+    		style: myStyle
+    	});
+
+        var map = new ol.Map({
+            layers: [tileLayer, vector],
+            target: 'map',
+            view: new ol.View({
+                center: ol.proj.transform([105.571776, 28.874441], 'EPSG:4326', 'EPSG:3857'), //地图中心点坐标
+                zoom: 18, //地图比例
+                maxZoom: 19,
+                minZoom: 3,
+                projection: ol.proj.get('EPSG:3857'),
+            })
+        });
+    </script>
+</body>
+
+</html>

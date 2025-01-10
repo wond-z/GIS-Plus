@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta chareset="utf-8">
+    <title>OpenLayers 3 example</title>
+    <link rel="stylesheet" href="css/ol.css">
+    <script src="js/ol.js" type="text/javascript"></script>
+    <style>
+        #map { height:400px; width:100%; }
+    </style>
+</head>
+<body>
+    <h1>My Map</h1>
+    <input id="speed" type="range" min="10" max="999" step="10" value="60">
+    <button id="start-animation">Start Animation</button>
+    <div id="map"></div>
+    <script type="text/javascript">
+        const key = 'D6rA4zTHduk6KOKTXzGB';
+        const attributions =
+            '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> ' +
+            '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>';
+
+        var map = new ol.Map({
+            target: 'map',
+            view: new ol.View({
+                center: [-5639523.95, -3501274.52],
+                zoom: 10,
+                minZoom: 2,
+                maxZoom: 19,
+            }),
+            layers: [new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    attributions: attributions,
+                    url: 'http://webst0{1-4}.is.autonavi.com/appmaptile?style=7&x={x}&y={y}&z={z}',
+                    tileSize: 512,
+                }),
+            })],
+        });
+
+        // 获取路径数据
+        fetch('data/route.json').then(function (response) {
+            // Todo fetch:
+            response.json().then(function (result) {
+                console.log(result)
+                const polyline = result.routes[0].geometry;
+
+                // 定义路线
+                const route = new ol.format.Polyline({
+                    factor: 1e6,
+                }).readGeometry(polyline, {
+                    dataProjection: 'EPSG:4326',
+                    featureProjection: 'EPSG:3857',
+                });
+                console.log(route);
+
+                // 定义路径元素
+                const routeFeature = new ol.Feature({
+                    type: 'route',
+                    geometry: route,
+                });
+
+                // 定义开始点标记
+                const startMarker = new ol.Feature({
+                    type: 'icon',
+                    geometry: new ol.geom.Point(route.getFirstCoordinate()),
+                });
+
+                // 定义结束点标记
+                const endMarker = new ol.Feature({
+                    type: 'icon',
+                    geometry: new ol.geom.Point(route.getLastCoordinate()),
+                });
+
+                // 定义一个点，作为后面被用来移动的标记
+                const position = startMarker.getGeometry().clone();
+                const geoMarker = new ol.Feature({
+                    type: 'geoMarker',
+                    geometry: position,
+                });
+
+                // 定义地图中使用到的图素的样式
+                const styles = {
+                    // 路径样式
+                    'route': new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            width: 6,
+                            color: [237, 212, 0, 0.8],
+                        }),
+                    }),
+                    // 图标样式
+                    'icon': new ol.style.Style({
+                        image: new ol.style.Icon({
+                            anchor: [0.5, 1],
+                            src: 'img/icon.png',
+                        }),
+                    }),
+                    'geoMarker': new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 7,
+                            fill: new ol.style.Fill({ color: 'black' }),
+                            stroke: new ol.style.Stroke({
+                                color: 'white',
+                                width: 2,
+                            }),
+                        }),
+                    }),
+                };
+
+                // 定义数据图层，将前面定义的所有图素和标注添加到数据层
+                const vectorLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [routeFeature, geoMarker, startMarker, endMarker],
+                    }),
+                    style: function (feature) {
+                        return styles[feature.get('type')];
+                    },
+                });
+
+                // 将数据图层添加到地图中
+                map.addLayer(vectorLayer);
+
+                /**
+                 * 说明:
+                 * 至此步，地图中所要用到的所有内容均已具备
+                 * 下一步将为要移动点做动画效果
+                 */
+
+
+                const speedInput = document.getElementById('speed');
+                const startButton = document.getElementById('start-animation');
+                // 记录动画执行状态
+                let animating = false;
+                // 定义距离
+                let distance = 0;
+                // 
+                let lastTime;
+
+                // 移动点
+                function moveFeature(event) {
+                    const speed = Number(speedInput.value);
+                    const time = event.frameState.time;
+                    const elapsedTime = time - lastTime;
+                    distance = (distance + (speed * elapsedTime) / 1e6) % 2;
+                    lastTime = time;
+
+                    // 点的当前位置
+                    const currentCoordinate = route.getCoordinateAt(
+                        distance > 1 ? 2 - distance : distance
+                    );
+                    position.setCoordinates(currentCoordinate);
+                    const vectorContext = ol.render.getVectorContext(event);
+                    vectorContext.setStyle(styles.geoMarker);
+                    vectorContext.drawGeometry(position);
+                    // 继续渲染后动画
+                    map.render();
+                }
+
+                // 开始动画
+                function startAnimation() {
+                    animating = true;
+                    lastTime = Date.now();
+                    startButton.textContent = 'Stop Animation';
+                    vectorLayer.on('postrender', moveFeature);
+                    // hide geoMarker and trigger map render through change event
+                    geoMarker.setGeometry(null);
+                }
+
+                // 结束动画
+                function stopAnimation() {
+                    animating = false;
+                    startButton.textContent = 'Start Animation';
+
+                    // Keep marker at current animation position
+                    geoMarker.setGeometry(position);
+                    vectorLayer.un('postrender', moveFeature);
+                }
+
+                startButton.addEventListener('click', function () {
+                    if (animating) {
+                        stopAnimation();
+                    } else {
+                        startAnimation();
+                    }
+                });
+
+
+            });
+        });
+    </script>
+</body>
+</html>

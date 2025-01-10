@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>使用ol.Feature类实现图片标注</title>
+    <script src="js/ol.js"></script>
+    <link rel="stylesheet" href="css/ol.css">
+    <style>
+        .map { width:100%; height: 500px; }
+    </style>
+</head>
+<body>
+    <div id="map" class="map"></div>
+    <script>
+        // 标注样式
+        const labelStyle = new ol.style.Style({
+            image: new ol.style.Icon({
+                src: 'https://pic4.zhimg.com/80/v2-b7d2c5d7fc4a567489687f67841ecec3_720w.jpg',
+                scale: 0.1,
+            })
+        });
+
+        const vectorSource = new ol.source.Vector();
+        const vectorLayer = new ol.layer.Vector({
+            source: vectorSource
+        });
+
+        // 用于充当标注的要素
+        let labelFeature = new ol.Feature({
+            geometry: new ol.geom.Point([12956325,4851028])
+        });
+        // 设置标注的样式
+        labelFeature.setStyle(labelStyle);
+        // 将标注要素添加到矢量图层中
+        vectorSource.addFeature(labelFeature);
+
+        var map = new ol.Map({
+            target: 'map',                          // 关联到对应的div容器
+            layers: [
+                new ol.layer.Tile({                 // 瓦片图层
+                    source: new ol.source.Stamen({
+                        layer: 'terrain'
+                    })
+                }),
+                vectorLayer
+            ],
+            view: new ol.View({                     // 地图视图
+                projection: 'EPSG:3857',
+                center: [0, 0],
+                zoom: 0
+            })
+        });
+    </script>
+</body>
+</html>

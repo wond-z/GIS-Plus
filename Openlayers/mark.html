@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>显示弹出框-福州鼓楼</title>
+    <link rel="stylesheet" type="text/css" href="./css/ol.css" />
+    <link rel="icon" type="image/x-icon" href="" />
+    <style type="text/css">
+        * {
+            padding: 0;
+            margin:0;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        .map {
+            width: 100%;
+            height:100%;
+        }
+        button {
+            display: inline;
+        }
+        .ol-popup {
+            position: absolute;
+            background-color: #eeeeee;
+            -webkit-filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+            filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 280px;
+        }
+        .ol-popup:after,
+        .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .ol-popup:after {
+            border-top-color: #eeeeee;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+        }
+
+        .ol-popup-closer:after {
+            content: "✖";
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map" class="map"></div>
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>
+    </div>
+</body>
+<script src="./js/ol.js"></script>
+<script src="./js/jquery-3.5.1.min.js"></script>
+<script type="text/javascript">
+    /*********************显示地图**************************/
+
+    var pos = ol.proj.get('EPSG:3857');
+
+    var map = new ol.Map({
+        //地图容器div的ID
+        target: 'map',
+        //地图容器中加载的图层
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.OSM()
+            })
+        ],
+        view: new ol.View({
+            //设置地图投影坐标系
+            projection: pos,
+            center: [13276805.940731, 3008561.497087],
+            zoom: 13
+        }),
+    });
+
+    /*********************显示弹出层**************************/
+    var container = document.getElementById("popup");
+    var content = document.getElementById("popup-content");
+    var popupCloser = document.getElementById("popup-closer");
+
+    var overlay = new ol.Overlay({
+        element: container,
+        autoPan: true
+    });
+
+    map.on('click', function(e) {
+        var pixel = map.getEventPixel(e.originalEvent);
+        console.log(pixel);
+        map.forEachFeatureAtPixel(pixel, function(feature) {
+            //console.log(feature);
+            //return feature;
+            var coodinate = e.coordinate;
+            content.innerHTML = "<p>你点击的坐标为：" + coodinate + "</p>";
+            overlay.setPosition(coodinate);
+            map.addOverlay(overlay);
+        });
+    });
+
+    popupCloser.addEventListener('click', function() {
+        overlay.setPosition(undefined);
+    });
+
+
+    /*********************显示地标**************************/
+    var maxX = 13281566;
+    var minX = 13273419;
+
+    var maxY = 3008492;
+    var minY = 3008104;
+
+    //设置icon
+    //创建空的矢量容器
+    var vectorSource = new ol.source.Vector({});
+
+    for (var i = 1; i <= 10; i++) {
+        var t1 = Math.random() * (maxX - minX + 1) + minX;
+        var t2 = Math.random() * (maxY - minY + 1) + minY;
+        console.log(t1 + ',' + t2)
+        //创建图标特性
+        var iconFeature = new ol.Feature({
+            geometry: new ol.geom.Point([t1, t2], "XY"),
+            name: "my Icon",
+        });
+        //将图标特性添加进矢量中
+        vectorSource.addFeature(iconFeature);
+        //console.log(t1+" "+t2);
+    }
+
+    //创建图标样式
+    var iconStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+            opacity: 0.75,
+            src: "./img/icon.png"
+        }),
+    });
+    //创建图标层
+    var vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
+        style: iconStyle
+    });
+
+
+    // map.addLayer(mlayer);
+    map.addLayer(vectorLayer);
+</script>
+
+</html>
