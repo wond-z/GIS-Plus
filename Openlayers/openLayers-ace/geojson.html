@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+      <meta name="charset" content="">
+      <title>OpenLayers example</title>
+    <link rel="stylesheet" href="../lib/openlayers-v6.14.1-dist/ol.css" type="text/css">
+    <style>
+        * {
+            padding: 0;
+            margin:0;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .map {
+            display: inline-block;
+            width: 50%;
+            height:100%;
+        }
+        .code {
+            display: inline-block;
+            width: 49%;
+            height:100%;
+        }
+        .pull-right {
+            float: right;
+        }
+    </style>
+    <script src="../lib/openlayers-v6.14.1-dist/ol.js"></script>
+    <script src="./src-min/ace.js" charset="utf-8"></script>
+    <script src="./src-min/ext-language_tools.js" charset="utf-8"></script>
+    <script src="./src-min/theme-monokai.js" charset="utf-8"></script>
+    <!-- <script src="./src-min/theme-twilight.js" charset="utf-8"></script> -->
+    <script src="./src-min/mode-json.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./src-min/mode-json5.js" type="text/javascript" charset="utf-8"></script>
+  </head>
+  <body>
+    <!-- <h2>My Map</h2> -->
+    <form class="form-inline">
+      <label>Geometry type &nbsp;</label>
+      <select id="type">
+        <option value="Point">Point</option>
+        <option value="LineString">LineString</option>
+        <option value="Polygon">Polygon</option>
+        <option value="Circle">Circle</option>
+      </select>
+      <button type="button" class="pull-right" id="resetData">ResetData</button>
+    </form>
+
+    <div id="map" class="map"></div>
+    <div id="editor" class="code">some text</div>
+    <script>
+        var editor = ace.edit("editor");
+
+        // 字体大小
+        editor.setFontSize(16);
+
+        //设置只读（true时只读，用于展示代码）
+        // editor.setReadOnly(true);
+
+        // 主题
+        editor.setTheme("ace/theme/twilight");
+
+        // 加入JavaScript模块
+        // var json = ace.require("ace/mode/json").Mode;
+        // editor.session.setMode(new json());
+        editor.getSession().setMode("ace/mode/json");
+
+
+        var geojsonObject = {
+            'type': 'FeatureCollection',
+            'crs': {
+                'type': 'name',
+                'properties': {
+                    'name': 'EPSG:3857'
+                }
+            },
+            'features': [{
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [0, 0]
+                }
+            }, {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': [[4e6, -2e6], [8e6, 2e6]]
+                }
+            }, {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': [[4e6, 2e6], [8e6, -2e6]]
+                }
+            }, {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': [[[-5e6, -1e6], [-4e6, 1e6], [-3e6, -1e6]]]
+                }
+            }, {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'MultiLineString',
+                    'coordinates': [
+                        [[-1e6, -7.5e5], [-1e6, 7.5e5]],
+                        [[1e6, -7.5e5], [1e6, 7.5e5]],
+                        [[-7.5e5, -1e6], [7.5e5, -1e6]],
+                        [[-7.5e5, 1e6], [7.5e5, 1e6]]
+                    ]
+                }
+            }, {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'MultiPolygon',
+                    'coordinates': [
+                        [[[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6], [-3e6, 6e6]]],
+                        [[[-2e6, 6e6], [-2e6, 8e6], [0, 8e6], [0, 6e6]]],
+                        [[[1e6, 6e6], [1e6, 8e6], [3e6, 8e6], [3e6, 6e6]]]
+                    ]
+                }
+            }, {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'GeometryCollection',
+                    'geometries': [{
+                        'type': 'LineString',
+                        'coordinates': [[-5e6, -5e6], [0, -5e6]]
+                    }, {
+                        'type': 'Point',
+                        'coordinates': [4e6, -5e6]
+                    }, {
+                        'type': 'Polygon',
+                        'coordinates': [[[1e6, -6e6], [2e6, -4e6], [3e6, -6e6]]]
+                    }]
+                }
+            }]
+        };
+        val = JSON.stringify(geojsonObject, null, 4)
+        editor.setValue(val);
+
+        // 重置数据
+        var btn = document.getElementById('resetData');
+        btn.onclick = function() {
+            var data = editor.getValue();
+            console.log(JSON.parse(data));
+        };
+
+        var image = new ol.style.Circle({
+            radius: 5,
+            fill: null,
+            stroke: new ol.style.Stroke({color: 'red', width: 1})
+        });
+
+        var styles = {
+            'Point': new ol.style.Style({
+                image: image
+            }),
+            'LineString': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'green',
+                    width: 1
+                })
+            }),
+            'MultiLineString': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'green',
+                    width: 1
+                })
+            }),
+            'MultiPoint': new ol.style.Style({
+                image: image
+            }),
+            'MultiPolygon': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'yellow',
+                    width: 1
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 255, 0, 0.1)'
+                })
+            }),
+            'Polygon': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'blue',
+                    lineDash: [4],
+                    width: 3
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 255, 0.1)'
+                })
+            }),
+            'GeometryCollection': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'magenta',
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'magenta'
+                }),
+                image: new ol.style.Circle({
+                    radius: 10,
+                    fill: null,
+                    stroke: new ol.style.Stroke({
+                        color: 'magenta'
+                    })
+                })
+            }),
+            'Circle': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'red',
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(255,0,0,0.2)'
+                })
+            })
+        };
+
+        var styleFunction = function(feature) {
+            return styles[feature.getGeometry().getType()];
+        };
+
+        // 光栅数据
+        var rasterLayer = new ol.layer.Tile({
+            source: new ol.source.OSM()
+        });
+
+        // 矢量数据
+        var vectorSource = new ol.source.Vector({
+            features: (new ol.format.GeoJSON()).readFeatures(geojsonObject)
+        });
+
+        vectorSource.addFeature(new ol.Feature(new ol.geom.Circle([5e6, 7e6], 1e6)));
+
+        var vectorLayer = new ol.layer.Vector({
+            source: vectorSource,
+            style: styleFunction
+        });
+
+        var map = new ol.Map({
+            target: 'map',
+            layers: [rasterLayer, vectorLayer],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([103.40, 36.03]), // 兰州经纬度
+                // center: [-11000000, 4600000],
+                zoom: 4
+            })
+        });
+
+        // //绘制集合要素
+        // var pointFeature = new ol.Feature(new ol.geom.Point([0, 0]));
+        // var lineFeature = new ol.Feature(
+        //     new ol.geom.LineString([[-1e7, 1e6], [-1e6, 3e6]]));
+        //
+        // var polygonFeature = new ol.Feature(new ol.geom.Polygon([[[-3e6, -1e6], [-3e6, 1e6], [-1e6, 1e6], [-1e6, -1e6], [-3e6, -1e6]]]));
+        // //实例化一个矢量图层vector作为绘制层
+        // var source = new ol.source.Vector({
+        //     features: [pointFeature, lineFeature, polygonFeature]
+        // });
+        // var vector = new ol.layer.Vector({
+        //     source: source,
+        //     style: new ol.style.Style({
+        //         fill: new ol.style.Fill({
+        //             color: 'rgba(255,255,255,0.2)',
+        //
+        //         }),
+        //         stroke: new ol.style.Stroke({
+        //             color: '#ffcc33',
+        //             width: 2
+        //         }),
+        //         image: new ol.style.Circle({
+        //             radius: 7,
+        //             fill: new ol.style.Fill({
+        //                 color: '#ffcc33'
+        //             })
+        //         })
+        //     })
+        //
+        // })
+        // map.addLayer(vector);
+
+        var select = new ol.interaction.Select();
+        select.on('select', function(evt) {
+            console.log(evt);
+        });
+        var modify = new ol.interaction.Modify({
+            features: select.getFeatures()//选中的要素集
+        })
+        map.addInteraction(select);//将选择对象添加到地图中，地图就可以选中了
+        map.addInteraction(modify);//将修改对象放到地图，地图就可以对对象中的features进行修改。
+    </script>
+  </body>
+</html>

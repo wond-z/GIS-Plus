@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="../lib/openlayers-v6.14.1-dist/ol.css" type="text/css">
+    <style>
+      .map {
+        height: 500px;
+        width: 100%;
+      }
+    </style>
+    <script src="../lib/openlayers-v6.14.1-dist/ol.js"></script>
+    <title>OpenLayers example</title>
+  </head>
+  <body>
+    <!-- <h2>My Map</h2> -->
+    <div id="map" class="map"></div>
+    <form class="form-inline">
+      <label>Geometry type &nbsp;</label>
+      <select id="type">
+        <option value="Point">Point</option>
+        <option value="LineString">LineString</option>
+        <option value="Polygon">Polygon</option>
+        <option value="Circle">Circle</option>
+      </select>
+    </form>
+    <script type="text/javascript">
+        var source = new ol.source.Vector();
+        var vector = new ol.layer.Vector({
+            source: source,
+            style: new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 255, 255, 0.2)'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#ffcc33',
+                    width: 2
+                }),
+                image: new ol.style.Circle({
+                    radius: 7,
+                    fill: new ol.style.Fill({
+                        color: '#ffcc33'
+                    })
+                })
+            })
+        });
+        var raster = new ol.layer.Tile({
+            source: new ol.source.OSM()
+        });
+        var map = new ol.Map({
+            target: 'map',
+            layers: [raster, vector],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([103.40, 36.03]), // 兰州经纬度
+                // center: [-11000000, 4600000],
+                zoom: 4
+            })
+        });
+
+        var modify = new ol.interaction.Modify({source: source});
+        map.addInteraction(modify);
+        modify.on('modifyend', function(evt) {
+            console.log(evt);
+        });
+
+        var draw, snap;
+        var typeSelect = document.getElementById('type');
+
+        function addInteractions() {
+            draw = new ol.interaction.Draw({
+                source: source,
+                type: typeSelect.value
+            });
+            map.addInteraction(draw);
+            draw.on('drawend', function(val) {
+                console.log(val);
+            });
+            snap = new ol.interaction.Snap({source: source});
+            // 给地图添加交互
+            map.addInteraction(snap);
+        }
+
+        /**
+        * Handle change event.
+        */
+        typeSelect.onchange = function() {
+            // 从地图中移除交互
+            map.removeInteraction(draw);
+            map.removeInteraction(snap);
+            addInteractions();
+        };
+
+        addInteractions();
+    </script>
+  </body>
+</html>
